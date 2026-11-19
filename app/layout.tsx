@@ -43,7 +43,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <AuthProvider>
           <div id="root">
             <Nav />
-            <main>{children}</main>
+            <main className="av-main">{children}</main>
             <footer
               style={{
                 borderTop: "1px solid var(--line)",
