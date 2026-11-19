@@ -20,6 +20,10 @@ There is no test runner or test script configured. Do not assume `npm test` or a
 
 The project uses Next.js 16.4.6 with React 19.3. `AGENTS.md` warns that this version has breaking changes from older Next.js. Before writing Next.js code, read the relevant guide in `node_modules/next/dist/docs/` as `AGENTS.md` instructs. Do not edit the `<!-- BEGIN:nextjs-agent-rules -->` block in `AGENTS.md`; `next dev` rewrites it.
 
+## Skills
+
+Always use /frontend-design skill to design the UI.
+
 ## Architecture
 
 - **Router:** App Router only. Routes live in `app/` (`layout.tsx` is the root layout, `page.tsx` the home route). There is no `pages/` directory.
