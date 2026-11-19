@@ -32,6 +32,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
       if (stored && typeof stored.name === "string") {
+        // Mount-time sync from localStorage, which is external state. Required by spec 01 (Decisions).
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setUser({ name: stored.name });
       }
     } catch {
