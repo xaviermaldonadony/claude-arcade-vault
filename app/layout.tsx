@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Courier_Prime, JetBrains_Mono, Press_Start_2P } from "next/font/google";
 import "./globals.css";
 import "./arcade.css";
@@ -42,7 +43,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <div className="av-noise" />
         <AuthProvider>
           <div id="root">
-            <Nav />
+            <Suspense fallback={null}>
+              <Nav />
+            </Suspense>
             <main className="av-main">{children}</main>
             <footer
               style={{

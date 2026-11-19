@@ -2,6 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { GAMES, seededScores } from "@/lib/data";
 
+// Prerender the known games. Unknown ids still render on request and hit notFound().
+export function generateStaticParams() {
+  return GAMES.map((g) => ({ id: g.id }));
+}
+
 export default async function GameDetailPage({
   params,
 }: {
