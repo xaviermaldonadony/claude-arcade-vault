@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Courier_Prime, JetBrains_Mono, Press_Start_2P } from "next/font/google";
 import "./globals.css";
 import "./arcade.css";
+import { AuthProvider } from "@/components/auth-provider";
+import { Nav } from "@/components/nav";
 
 const pressStart = Press_Start_2P({
   variable: "--font-pixel",
@@ -38,22 +40,25 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body>
         <div className="av-bg" />
         <div className="av-noise" />
-        <div id="root">
-          <main>{children}</main>
-          <footer
-            style={{
-              borderTop: "1px solid var(--line)",
-              padding: "20px 32px",
-              textAlign: "center",
-              color: "var(--ink-faint)",
-              fontFamily: "var(--mono)",
-              fontSize: 11,
-              letterSpacing: "0.16em",
-            }}
-          >
-            © 2026 ARCADE VAULT · MADE WITH PIXELS AND NEON · v2.6.0
-          </footer>
-        </div>
+        <AuthProvider>
+          <div id="root">
+            <Nav />
+            <main>{children}</main>
+            <footer
+              style={{
+                borderTop: "1px solid var(--line)",
+                padding: "20px 32px",
+                textAlign: "center",
+                color: "var(--ink-faint)",
+                fontFamily: "var(--mono)",
+                fontSize: 11,
+                letterSpacing: "0.16em",
+              }}
+            >
+              © 2026 ARCADE VAULT · MADE WITH PIXELS AND NEON · v2.6.0
+            </footer>
+          </div>
+        </AuthProvider>
       </body>
     </html>
   );
