@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Courier_Prime, JetBrains_Mono, Press_Start_2P } from "next/font/google";
 import "./globals.css";
+import "./arcade.css";
 
 const pressStart = Press_Start_2P({
   variable: "--font-pixel",
