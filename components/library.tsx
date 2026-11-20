@@ -19,10 +19,12 @@ export function Library() {
   );
 
   return (
-    <div>
+    <div className="fade-in">
       <section className="av-hero">
-        <h1>ARCADE VAULT</h1>
-        <div className="sub">INSERT COIN TO PLAY</div>
+        <h1 className="flicker">ARCADE VAULT</h1>
+        <div className="sub">
+          INSERT COIN TO PLAY <span className="blink">_</span>
+        </div>
       </section>
 
       <div className="av-filters">
