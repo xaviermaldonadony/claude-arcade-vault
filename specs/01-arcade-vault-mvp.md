@@ -65,7 +65,7 @@ export type ScoreRow = { rank: number; name: string; score: number; date: string
 
 **Saved scores (written only):** `localStorage` key `av_scores`, value is a JSON array of `{ game: string, score: number, name: string, at: number }`. This is the same shape the template writes. No code reads it in this spec.
 
-**Signed-in user (mock):** `localStorage` key `av_user`, value `{ "name": string }`. `name` is the typed username, uppercased, capped at 10 characters, with `PLAYER1` used when empty. The key is absent for guests and after sign-out. The `AuthProvider` context (`components/auth-provider.tsx`) holds `user: { name: string } | null`, `signIn(name: string)`, and `signOut()`. It reads `av_user` inside `useEffect` on mount, so the first render is always signed out and server and client markup match.
+**Signed-in user (mock):** `localStorage` key `av_user`, value `{ "name": string }`. `name` is the typed username, uppercased, capped at 10 characters, with `PLAYER1` used when empty. The key is absent for guests and after sign-out. The `AuthProvider` context (`components/auth-provider.tsx`) holds `user: { name: string } | null`, `signIn(name: string)`, and `signOut()`. It reads `av_user` through `useSyncExternalStore`, with `localStorage` as the external store and a server snapshot of `null`. Server render and hydration are always signed out, so server and client markup match. After hydration the stored value is read, and `signIn` and `signOut` notify subscribers.
 
 ## Implementation plan
 
@@ -108,7 +108,7 @@ Every step leaves `npm run dev` running with every route rendering.
 - [ ] A username longer than 10 characters is stored truncated to 10 characters.
 - [ ] Clicking PLAY AS GUEST navigates to `/` and does not write `av_user`.
 - [ ] Clicking the signed-in name in the nav removes `av_user`, shows the Sign In button, and keeps the current route.
-- [ ] After sign-in, reloading any route keeps the user signed in. Before the mount effect runs, the nav shows Sign In, and no hydration warning appears in the console.
+- [ ] After sign-in, reloading any route keeps the user signed in. During hydration, before the stored value is read, the nav shows Sign In, and no hydration warning appears in the console.
 - [ ] Signed in as `KAI`, the `/games/fall/play` HUD shows `KAI` as the player, and SAVE SCORE prefills `KAI`.
 - [ ] Signed in, the Hall of Fame page shows the `YOUR BEST SCORE IN <TITLE>` row for the selected tab. Signed out, that row does not appear.
 - [ ] The Google and GitHub buttons on `/auth` do not navigate, write storage, or change the page.
@@ -135,7 +135,7 @@ Every step leaves `npm run dev` running with every route rendering.
 - **Yes:** Mock sign-in, not real auth. Any username signs in, as in the template. Real auth needs a backend and is a separate spec. The user first said "no auth for now", then asked to add auth back. This reading is the one chosen.
 - **No:** Real authentication now. It needs a backend, password storage, and sessions, all excluded from this MVP.
 - **No:** Field validation on the auth form. Mock sign-in accepts any input, and validation would suggest real checks.
-- **Yes:** Read `av_user` in `useEffect`, not during render. Avoids a server and client markup mismatch.
+- **Yes:** Read `av_user` through `useSyncExternalStore` with a server snapshot of `null`, not in a lazy initializer or during the first client render. Avoids a server and client markup mismatch, and the React lint rule `set-state-in-effect` is not triggered. Changed from the original `useEffect` plan.
 - **Yes:** Port `styles.css` verbatim with its class names. Keeps the visual match with the templates, which is the acceptance bar.
 - **No:** Converting every class to Tailwind utilities now. Large effort, and high risk of visual drift. Can be a later spec.
 - **Yes:** `next/font/google` for the three fonts. `CLAUDE.md` says Geist is loaded this way, and the same method keeps fonts self-hosted at build time.
@@ -159,7 +159,7 @@ Every step leaves `npm run dev` running with every route rendering.
 | Risk | Mitigation |
 | --- | --- |
 | `Math.random` in the player ticker or `seededScores` drift causes hydration mismatch | Ticker runs only inside `useEffect` on the client. `seededScores` is deterministic and called with a fixed seed per game. |
-| `av_user` read during render causes hydration mismatch | Read in `useEffect`. First render is always signed out. |
+| `av_user` read during render causes hydration mismatch | Read through `useSyncExternalStore` with a `null` server snapshot. Server render and hydration are always signed out. |
 | Google Fonts unreachable at build time breaks `next build` | `next/font` downloads fonts at build. If the build environment is offline, the build fails. |
 | Template CSS assumes global `body` and `#root` styles | `app/arcade.css` is imported in `layout.tsx`. The `#root` wrapper is replaced with the Next.js body. Verified in acceptance criteria visually. |
 | `usePathname` in nav forces a client boundary in the layout | Nav is a client component only. Layout stays a server component. |

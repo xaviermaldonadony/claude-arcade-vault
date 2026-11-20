@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useMemo,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
 
 // MOCK sign-in. Stores only a display name in localStorage. No passwords, no sessions, no server.
 // Replace with real auth in a future spec.
@@ -24,32 +30,54 @@ export function normalizeName(raw: string): string {
   return name || DEFAULT_NAME;
 }
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  // First render is always signed out so server and client markup match.
-  const [user, setUser] = useState<User | null>(null);
+// External store: localStorage. Listeners let same-tab writes and other-tab writes re-render.
+const listeners = new Set<() => void>();
 
-  useEffect(() => {
-    try {
-      const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
-      if (stored && typeof stored.name === "string") {
-        // Mount-time sync from localStorage, which is external state. Required by spec 01 (Decisions).
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setUser({ name: stored.name });
-      }
-    } catch {
-      // Corrupt value: treat as signed out.
-    }
-  }, []);
+function emit() {
+  listeners.forEach((l) => l());
+}
+
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  window.addEventListener("storage", listener);
+  return () => {
+    listeners.delete(listener);
+    window.removeEventListener("storage", listener);
+  };
+}
+
+// Raw string snapshot: a primitive, so React can compare it cheaply.
+function getSnapshot(): string | null {
+  return localStorage.getItem(STORAGE_KEY);
+}
+
+// Used during server render and hydration. Always signed out, so markup matches.
+function getServerSnapshot(): string | null {
+  return null;
+}
+
+function parseUser(raw: string | null): User | null {
+  if (!raw) return null;
+  try {
+    const stored = JSON.parse(raw);
+    return stored && typeof stored.name === "string" ? { name: stored.name } : null;
+  } catch {
+    return null; // Corrupt value: treat as signed out.
+  }
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const raw = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const user = useMemo(() => parseUser(raw), [raw]);
 
   const signIn = (name: string) => {
-    const next = { name: normalizeName(name) };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    setUser(next);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ name: normalizeName(name) }));
+    emit();
   };
 
   const signOut = () => {
     localStorage.removeItem(STORAGE_KEY);
-    setUser(null);
+    emit();
   };
 
   return (
