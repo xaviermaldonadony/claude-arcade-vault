@@ -1,6 +1,6 @@
 # SPEC 01 — Arcade Vault visual MVP
 
-> **Status:** Approved
+> **Status:** Implemented
 > **Depends on:** none
 > **Date:** 2026-11-19
 > **Objective:** Port the five screens in `references/templates/` to Next.js App Router pages backed by mock data and a mock sign-in, with no real game logic and no real authentication.
@@ -45,18 +45,23 @@ Mock game data lives in `lib/data.ts`:
 
 ```ts
 export type Game = {
-  id: string;          // URL slug, e.g. "block-buster"
-  title: string;       // uppercase display name
+  id: string; // URL slug, e.g. "block-buster"
+  title: string; // uppercase display name
   short: string;
   long: string;
-  cat: "ARCADE" | "PUZZLE" | "SHOOTER" | "VERSUS";
-  cover: string;       // CSS class name, e.g. "cover-bricks"
-  color: "cyan" | "magenta" | "yellow" | "green";
-  best: number;        // global best score
-  plays: string;       // display string, e.g. "12.4K"
+  cat: 'ARCADE' | 'PUZZLE' | 'SHOOTER' | 'VERSUS';
+  cover: string; // CSS class name, e.g. "cover-bricks"
+  color: 'cyan' | 'magenta' | 'yellow' | 'green';
+  best: number; // global best score
+  plays: string; // display string, e.g. "12.4K"
 };
 
-export type ScoreRow = { rank: number; name: string; score: number; date: string };
+export type ScoreRow = {
+  rank: number;
+  name: string;
+  score: number;
+  date: string;
+};
 ```
 
 - `GAMES: Game[]` is the 8 entries from `data.jsx`, unchanged.
@@ -156,14 +161,14 @@ Every step leaves `npm run dev` running with every route rendering.
 
 ## Identified risks
 
-| Risk | Mitigation |
-| --- | --- |
-| `Math.random` in the player ticker or `seededScores` drift causes hydration mismatch | Ticker runs only inside `useEffect` on the client. `seededScores` is deterministic and called with a fixed seed per game. |
-| `av_user` read during render causes hydration mismatch | Read through `useSyncExternalStore` with a `null` server snapshot. Server render and hydration are always signed out. |
-| Google Fonts unreachable at build time breaks `next build` | `next/font` downloads fonts at build. If the build environment is offline, the build fails. |
-| Template CSS assumes global `body` and `#root` styles | `app/arcade.css` is imported in `layout.tsx`. The `#root` wrapper is replaced with the Next.js body. Verified in acceptance criteria visually. |
-| `usePathname` in nav forces a client boundary in the layout | Nav is a client component only. Layout stays a server component. |
-| Mock sign-in is mistaken for real security | Documented in Scope and Decisions. Nothing sensitive is stored, and `av_user` holds only a display name. |
+| Risk                                                                                 | Mitigation                                                                                                                                     |
+| ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Math.random` in the player ticker or `seededScores` drift causes hydration mismatch | Ticker runs only inside `useEffect` on the client. `seededScores` is deterministic and called with a fixed seed per game.                      |
+| `av_user` read during render causes hydration mismatch                               | Read through `useSyncExternalStore` with a `null` server snapshot. Server render and hydration are always signed out.                          |
+| Google Fonts unreachable at build time breaks `next build`                           | `next/font` downloads fonts at build. If the build environment is offline, the build fails.                                                    |
+| Template CSS assumes global `body` and `#root` styles                                | `app/arcade.css` is imported in `layout.tsx`. The `#root` wrapper is replaced with the Next.js body. Verified in acceptance criteria visually. |
+| `usePathname` in nav forces a client boundary in the layout                          | Nav is a client component only. Layout stays a server component.                                                                               |
+| Mock sign-in is mistaken for real security                                           | Documented in Scope and Decisions. Nothing sensitive is stored, and `av_user` holds only a display name.                                       |
 
 ## What is **not** in this spec
 
