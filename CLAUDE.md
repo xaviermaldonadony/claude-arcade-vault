@@ -27,11 +27,12 @@ Always use /frontend-design skill to design the UI.
 ## Architecture
 
 - **Router:** App Router only. Routes live in `app/` (`layout.tsx` is the root layout, `page.tsx` the home route). There is no `pages/` directory.
-- **Styling:** Tailwind CSS v4. `app/globals.css` imports `tailwindcss` and defines light/dark CSS variables (`--background`, `--foreground`) mapped to Tailwind colors via `@theme inline`. Dark mode follows `prefers-color-scheme`. Tailwind is compiled through the `@tailwindcss/turbopack` loader configured in `next.config.ts` under `turbopack.rules`, so keep that config when changing CSS handling.
-- **Fonts:** Geist and Geist Mono loaded with `next/font/google` in `app/layout.tsx`, exposed as `--font-geist-sans` and `--font-geist-mono`.
+- **Styling:** The template CSS is ported verbatim into `app/arcade.css`, imported from `app/layout.tsx`, with the original class names. `app/globals.css` only imports `tailwindcss`. The app is dark-only, with no light theme. Tailwind is compiled through the `@tailwindcss/turbopack` loader configured in `next.config.ts` under `turbopack.rules`, so keep that config when changing CSS handling. The `prefers-reduced-motion` overrides are at the end of `app/arcade.css`.
+- **Fonts:** `Press Start 2P`, `Courier Prime`, and `JetBrains Mono` are loaded with `next/font/google` in `app/layout.tsx`, exposed as `--font-pixel`, `--font-courier`, and `--font-mono`. `app/arcade.css` maps `--pixel` and `--mono` to them.
 - **Path alias:** `@/*` resolves to the repo root (`tsconfig.json`).
 - **Experimental Next.js flags** in `next.config.ts`: `experimental.agentFeedback`, `cacheComponents`, and `partialPrefetching` are enabled. Account for them when changing caching, data fetching, or prefetching behavior.
-- **Metadata:** `app/layout.tsx` still exports the scaffold title and description ("Create Next App"). Replace these when the product takes shape.
+- **Metadata:** `app/layout.tsx` exports the title `Arcade Vault` and the README description.
+- **Mock auth:** `components/auth-provider.tsx` provides `AuthProvider` and the `useAuth()` hook (`user`, `signIn`, `signOut`). It is mock sign-in only: it stores `{ name }` in `localStorage` under `av_user`, with no passwords, sessions, or server records. It reads storage through `useSyncExternalStore` with a `null` server snapshot, so server render and hydration are always signed out. Components that need the user name should call `useAuth()`, not read `localStorage` directly.
 
 ## Spec-driven design workflow
 
