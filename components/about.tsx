@@ -1,23 +1,47 @@
 "use client";
 
-import { useId, useRef, useState, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { HighlightIcon } from "@/components/pixel-icons";
 import { useReveal } from "@/components/use-reveal";
 import { ABOUT_HIGHLIGHTS } from "@/lib/data";
 
 type ContactForm = { name: string; email: string; msg: string };
 
-// About page at "/about" (SPEC 02, step 8). Hero, highlights, divider, contact intro and form.
-// The form is a client-side mock. Submit handling (validation, success panel) is added in step 9.
+const EMPTY_FORM: ContactForm = { name: "", email: "", msg: "" };
+
+// About page at "/about" (SPEC 02, steps 8 and 9). Hero, highlights, divider, contact intro and form.
+// The form is a client-side mock: it validates, shows the success panel, and stores nothing.
 export function About() {
   const rootRef = useRef<HTMLDivElement>(null);
   useReveal(rootRef);
 
-  const [form, setForm] = useState<ContactForm>({ name: "", email: "", msg: "" });
+  const [form, setForm] = useState<ContactForm>(EMPTY_FORM);
+  const [shake, setShake] = useState(false);
+  // Trimmed name of the last successful send. Non-null shows the success panel.
+  const [sent, setSent] = useState<string | null>(null);
   const id = useId();
+
+  // Remove the shake class after the 400 ms animation.
+  useEffect(() => {
+    if (!shake) return;
+    const t = setTimeout(() => setShake(false), 400);
+    return () => clearTimeout(t);
+  }, [shake]);
 
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const name = form.name.trim();
+    if (!name || !form.email.trim() || !form.msg.trim()) {
+      setShake(true);
+      return;
+    }
+    // Nothing is stored or sent. Only the trimmed name is kept, for the success line.
+    setSent(name);
+  };
+
+  const sendAnother = () => {
+    setSent(null);
+    setForm(EMPTY_FORM);
   };
 
   return (
@@ -79,7 +103,9 @@ export function About() {
             </div>
           </div>
 
-          <form className="contact-form" onSubmit={onSubmit}>
+          <form className={"contact-form" + (shake ? " shake" : "")} onSubmit={onSubmit}>
+            {!sent ? (
+              <>
             <div className="field">
               <label htmlFor={`${id}-name`}>NAME</label>
               <input
@@ -112,6 +138,33 @@ export function About() {
             <button className="btn xl press" type="submit" style={{ width: "100%" }}>
               ▶  SEND MESSAGE
             </button>
+              </>
+            ) : (
+              <div className="terminal-success">
+                <div className="term-bar">
+                  <span className="dot r"></span>
+                  <span className="dot y"></span>
+                  <span className="dot g"></span>
+                  <span className="term-title">VAULT-OS // TERMINAL</span>
+                </div>
+                <div className="term-body">
+                  <div className="line">
+                    <span className="prompt">vault@arcade:~$</span> ./send_message --to=team
+                  </div>
+                  <div className="line dim">[OK] Connecting to server…</div>
+                  <div className="line dim">[OK] Validating content…</div>
+                  <div className="line dim">[OK] Transmitting packet…</div>
+                  <div className="line success">
+                    &gt; MESSAGE RECEIVED. WE WILL REPLY SOON. THANKS, {sent.toUpperCase()}.
+                  </div>
+                  <div style={{ marginTop: 18 }}>
+                    <button className="btn ghost" type="button" onClick={sendAnother}>
+                      SEND ANOTHER MESSAGE
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </form>
         </div>
       </section>
