@@ -1,6 +1,6 @@
 # SPEC 02 — Home and About pages
 
-> **Status:** Approved
+> **Status:** Implemented
 > **Depends on:** SPEC 01
 > **Date:** 2026-11-19
 > **Objective:** Port the Home landing page and the About page with its contact form from `references/templates/home-about/` into App Router routes `/` and `/about`, translated to English, with Library moved to `/games` and mock data only.
@@ -30,7 +30,7 @@ SPEC 01 made the Library the home route at `/`. The new template adds a landing 
 - Spanish copy or an i18n layer. The template's Spanish is translated once, to English, in this spec.
 - Real live activity, real top players, real global ranking, and reading `av_scores` on Home. The Home data is fixed mock data.
 - Real pricing, payments, or accounts. `$0` is a display string.
-- Pulse (`.pulse`), blinking caret (`.blink`), flicker, and the typewriter on the terminal panel. These stay out per SPEC 01 Decisions.
+- Pulse (`.pulse`) and the typewriter on the terminal panel. These stay out per SPEC 01 Decisions. Blinking caret (`.blink`) and flicker are not used on Home or About. The Library hero at `/games` keeps them, per SPEC 01 as amended.
 - Changes to the Library, Detail, Player, Hall of Fame, and Auth screens beyond their route path (Library) and nav links.
 - Tests. The repo has no test runner (see `CLAUDE.md`).
 - Game names that match the template's activity and feature copy but not `GAMES` (for example Tetris, Snake). Their correction is copy work for a later spec.
@@ -125,7 +125,7 @@ Every step leaves `npm run dev` running with every route rendering.
 - [ ] Submitting the contact form does not change `localStorage` (no new keys, no changed values).
 - [ ] With `prefers-reduced-motion` not set, a `.reveal` section gets the `in` class when it scrolls into view.
 - [ ] With `prefers-reduced-motion: reduce`, `.reveal` sections are visible on load without the `in` class being waited for, and the silhouettes do not move.
-- [ ] The rendered HTML of `/`, `/games`, and `/about` contains no element with class `pulse` or `blink`, and no `_` caret after the eyebrow.
+- [ ] The rendered HTML of `/` and `/about` contains no element with class `pulse` or `blink`, and no `_` caret after the eyebrow. `/games` keeps the Library hero's `blink` caret, per SPEC 01 as amended.
 - [ ] Every class used by `home.jsx` and `about.jsx` exists in `app/arcade.css`. The SPEC 01 font variables and reduced-motion block are still present.
 - [ ] On `/`, `/games`, and `/about` at 1280 px and at 390 px, the layout, colors, and fonts match `references/templates/home-about/arcade-vault-standalone.html`, with English copy substituted. Differences are listed in the final report.
 - [ ] No console errors on `/`, `/games`, or `/about` in the dev server.
@@ -143,8 +143,8 @@ Every step leaves `npm run dev` running with every route rendering.
 - **Yes:** Home and About both ported in full in this spec. The user chose the full scope.
 - **Yes:** Contact form as client mock: validate non-blank, show success, store nothing. Same pattern as the mock sign-in in SPEC 01. No backend exists.
 - **No:** Sending contact messages, storing them, or a `mailto:` fallback. Real delivery needs a backend, a separate spec.
-- **Yes:** Scroll reveal and drifting silhouettes kept. Pulse, blink, caret, and flicker dropped, matching SPEC 01 Decisions. Reduced motion disables reveal motion and silhouette drift, and shows content immediately.
-- **No:** Full template motion. It would need pulse and blink, which SPEC 01 removed.
+- **Yes:** Scroll reveal and drifting silhouettes kept. Pulse, blink, caret, and flicker are not used on Home or About. Reduced motion disables reveal motion and silhouette drift, and shows content immediately.
+- **No:** Full template motion on Home and About. It would need pulse and blink, which are not used on those pages.
 - **Yes:** Pricing and FAQ copy ported as-is, translated. The claims (`$0 / ALWAYS`, no ads between games, new games every month, global ranking, `NO CARD REQUIRED`) are placeholder marketing. The owner must review them before launch. Not a claim this app yet meets.
 - **Yes:** Live activity, top players, and stats are static mock data in `lib/data.ts`. Matches SPEC 01's write-only saved scores. Reading `av_scores` on Home would reverse that decision.
 - **No:** Deriving Home data from `GAMES` or `seededScores`. The template's activity and top players use game names that are not in `GAMES`. Deriving them would hide that mismatch and imply consistency that is not there.
@@ -173,7 +173,7 @@ Every step leaves `npm run dev` running with every route rendering.
 - Spanish copy or an i18n layer.
 - Real live activity, real rankings, or reading saved scores on Home.
 - Real pricing, payments, or accounts.
-- Pulse, blink, caret, flicker, or the typewriter effect.
+- Pulse, blink, caret, flicker, or the typewriter effect on Home or About. The Library hero at `/games` is unchanged from SPEC 01.
 - Tests or a test runner.
 - Correcting the game names in template copy to match `GAMES`.
 - Any change to SPEC 01's file. Its route for the Library is superseded by this spec, not edited.

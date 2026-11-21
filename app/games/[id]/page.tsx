@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { GAMES, seededScores } from "@/lib/data";
 
 // Prerender the known games. Unknown ids still render on request and hit notFound().
@@ -7,11 +8,17 @@ export function generateStaticParams() {
   return GAMES.map((g) => ({ id: g.id }));
 }
 
-export default async function GameDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+// The URL param is read inside <Suspense>, so the page shell does not block on it
+// (cacheComponents: "URL data outside of Suspense" fix).
+export default function GameDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  return (
+    <Suspense fallback={null}>
+      <GameDetail params={params} />
+    </Suspense>
+  );
+}
+
+async function GameDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const game = GAMES.find((g) => g.id === id);
   if (!game) notFound();

@@ -1273,6 +1273,11 @@ a { color: inherit; text-decoration: none; }
 .faq-q { font-size: 10px; letter-spacing: 0.12em; color: var(--ink); margin-bottom: 8px; }
 .faq-a { font-family: var(--mono); font-size: 13px; color: var(--ink-dim); line-height: 1.6; }
 
+/* Narrow phones: let the activity card titles wrap instead of truncating with an ellipsis. */
+@media (max-width: 520px) {
+  .ac-title { white-space: normal; overflow: visible; text-overflow: clip; }
+}
+
 /* ===== prefers-reduced-motion: disable non-essential motion only ===== */
 @media (prefers-reduced-motion: reduce) {
   .av-bg::before,
