@@ -1151,6 +1151,10 @@ a { color: inherit; text-decoration: none; }
 }
 .contact-form textarea:focus { border-color: var(--cyan); box-shadow: 0 0 12px rgba(0,245,255,0.35); }
 .contact-form textarea::placeholder, .contact-form input::placeholder { color: var(--ink-faint); }
+/* SPEC 03 error line: terminal voice in the existing magenta, same glow as .neon-magenta. */
+.contact-form .error-line { margin-top: 14px; font-family: var(--mono); font-size: 13px; line-height: 1.6; font-weight: 700; color: var(--magenta); text-shadow: 0 0 6px rgba(255, 0, 110, 0.45); overflow-wrap: anywhere; }
+/* SPEC 03 honeypot: positioned off screen. Markup sets aria-hidden and tabIndex -1. */
+.contact-form .hp-field { position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden; }
 
 .btn.press:active { transform: translateY(3px) scale(0.99); box-shadow: 0 0 6px rgba(0,245,255,0.2) inset; }
 
@@ -1216,6 +1220,12 @@ a { color: inherit; text-decoration: none; }
 .top-row.top1::before { background: linear-gradient(90deg, rgba(255,207,58,0.14), transparent); }
 .top-row.top2::before { background: linear-gradient(90deg, rgba(199,208,224,0.10), transparent); }
 .top-row.top3::before { background: linear-gradient(90deg, rgba(217,122,58,0.10), transparent); }
+/* Score bar under each top-player row. Width is set inline on .tp-fill (SPEC 02). */
+.top-row .tp-bar { left: 0; right: 0; bottom: 0; height: 2px; background: rgba(0, 245, 255, 0.12); }
+.top-row .tp-fill { display: block; height: 100%; background: var(--cyan); box-shadow: 0 0 6px rgba(0, 245, 255, 0.5); }
+.top-row.top1 .tp-fill { background: var(--gold); box-shadow: 0 0 6px rgba(255, 207, 58, 0.6); }
+.top-row.top2 .tp-fill { background: var(--silver); }
+.top-row.top3 .tp-fill { background: var(--bronze); }
 .tp-p, .tp-s, .tp-rk { position: relative; z-index: 1; }
 
 /* ===== PRICING ===== */

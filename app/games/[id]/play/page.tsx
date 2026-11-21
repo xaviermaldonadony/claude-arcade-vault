@@ -7,6 +7,9 @@ export function generateStaticParams() {
   return GAMES.map((g) => ({ id: g.id }));
 }
 
+// Blocking route: notFound() runs before streaming, so unknown ids return 404 (see streaming.md, Status codes).
+export const instant = false;
+
 export default async function PlayPage({
   params,
 }: {

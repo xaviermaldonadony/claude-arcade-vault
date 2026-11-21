@@ -4,13 +4,22 @@ import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { HighlightIcon } from "@/components/pixel-icons";
 import { useReveal } from "@/components/use-reveal";
 import { ABOUT_HIGHLIGHTS } from "@/lib/data";
+import type { ContactErrorField } from "@/lib/contact";
 
 type ContactForm = { name: string; email: string; msg: string };
 
+type ContactError = { kind: "send_failed" } | { kind: "validation"; field: ContactErrorField };
+
 const EMPTY_FORM: ContactForm = { name: "", email: "", msg: "" };
 
-// About page at "/about" (SPEC 02, steps 8 and 9). Hero, highlights, divider, contact intro and form.
-// The form is a client-side mock: it validates, shows the success panel, and stores nothing.
+const FIELD_LABEL: Record<ContactErrorField, string> = {
+  name: "NAME",
+  email: "EMAIL",
+  msg: "MESSAGE",
+};
+
+// About page at "/about" (SPEC 02, steps 8 and 9; SPEC 03 step 4). Hero, highlights, divider, contact intro and form.
+// The form posts to POST /api/contact. It shows the success panel only after a 200 response.
 export function About() {
   const rootRef = useRef<HTMLDivElement>(null);
   useReveal(rootRef);
@@ -19,6 +28,10 @@ export function About() {
   const [shake, setShake] = useState(false);
   // Trimmed name of the last successful send. Non-null shows the success panel.
   const [sent, setSent] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+  // Ref guards against a second submit before the pending state re-renders.
+  const pendingRef = useRef(false);
+  const [error, setError] = useState<ContactError | null>(null);
   const id = useId();
 
   // Remove the shake class after the 400 ms animation.
@@ -28,21 +41,59 @@ export function About() {
     return () => clearTimeout(t);
   }, [shake]);
 
-  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (pendingRef.current) return;
+    setError(null);
     const name = form.name.trim();
-    if (!name || !form.email.trim() || !form.msg.trim()) {
+    const email = form.email.trim();
+    const msg = form.msg.trim();
+    if (!name || !email || !msg) {
       setShake(true);
       return;
     }
-    // Nothing is stored or sent. Only the trimmed name is kept, for the success line.
-    setSent(name);
+    // Read before the await. The honeypot input (SPEC 03 step 5) is added to the form later.
+    const website = String(new FormData(e.currentTarget).get("website") ?? "");
+
+    pendingRef.current = true;
+    setPending(true);
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, msg, website }),
+      });
+      const data = await res.json().catch(() => null);
+      if (res.status === 200 && data?.ok === true) {
+        setSent(name);
+        return;
+      }
+      const field = data?.field;
+      if (res.status === 400 && data?.error === "validation" && field in FIELD_LABEL) {
+        setError({ kind: "validation", field });
+      } else {
+        setError({ kind: "send_failed" });
+      }
+    } catch {
+      setError({ kind: "send_failed" });
+    } finally {
+      pendingRef.current = false;
+      setPending(false);
+    }
   };
 
   const sendAnother = () => {
     setSent(null);
     setForm(EMPTY_FORM);
+    setError(null);
   };
+
+  const errorText =
+    error?.kind === "send_failed"
+      ? "> ERROR: MESSAGE NOT SENT. CHECK YOUR CONNECTION AND TRY AGAIN."
+      : error?.kind === "validation"
+        ? `> ERROR: CHECK THE ${FIELD_LABEL[error.field]} FIELD.`
+        : null;
 
   return (
     <div ref={rootRef} className="about fade-in">
@@ -135,9 +186,15 @@ export function About() {
                 placeholder="Tell us what you have in mind…"
               ></textarea>
             </div>
-            <button className="btn xl press" type="submit" style={{ width: "100%" }}>
-              ▶  SEND MESSAGE
+            <button
+              className="btn xl press"
+              type="submit"
+              disabled={pending}
+              style={{ width: "100%" }}
+            >
+              {pending ? "▶  SENDING…" : "▶  SEND MESSAGE"}
             </button>
+            {errorText && <div className="error-line">{errorText}</div>}
               </>
             ) : (
               <div className="terminal-success">
@@ -165,6 +222,16 @@ export function About() {
                 </div>
               </div>
             )}
+            {/* Honeypot (SPEC 03). Hidden from people and assistive tech. Bots that fill it get a fake 200. */}
+            <input
+              className="hp-field"
+              name="website"
+              type="text"
+              aria-hidden="true"
+              tabIndex={-1}
+              autoComplete="off"
+              defaultValue=""
+            />
           </form>
         </div>
       </section>
