@@ -62,8 +62,7 @@ export async function POST(request: Request) {
     });
 
     if (error) {
-      console.error('contact: resend returned error', error.name);
-      return sendFailed();
+      console.error('contact: resend returned error', error.name);      return sendFailed();
     }
   } catch (err) {
     console.error('contact: resend call threw', err instanceof Error ? err.name : 'UnknownError');
