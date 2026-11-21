@@ -222,6 +222,16 @@ export function About() {
                 </div>
               </div>
             )}
+            {/* Honeypot (SPEC 03). Hidden from people and assistive tech. Bots that fill it get a fake 200. */}
+            <input
+              className="hp-field"
+              name="website"
+              type="text"
+              aria-hidden="true"
+              tabIndex={-1}
+              autoComplete="off"
+              defaultValue=""
+            />
           </form>
         </div>
       </section>
