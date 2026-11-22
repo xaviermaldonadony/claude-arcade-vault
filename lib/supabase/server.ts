@@ -2,6 +2,8 @@
 // Reads env vars at call time, so importing this module never throws on its own.
 // Neither the URL nor the key is logged or returned to the caller.
 
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+
 export type SupabaseConfig = {
   url: string; // NEXT_PUBLIC_SUPABASE_URL, trimmed, no trailing slash
   publishableKey: string; // NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, trimmed
@@ -20,6 +22,22 @@ export function getSupabaseConfig(): SupabaseConfig | null {
   }
 
   return { url, publishableKey };
+}
+
+// Data client for route handlers (SPEC 06). Uses the publishable key, so RLS decides what it can do.
+// Throws when a var is missing. The message names the var, never its value.
+export function createServerSupabase(): SupabaseClient {
+  const config = getSupabaseConfig();
+  if (!config) {
+    const missing = ['NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY'].filter(
+      (name) => !process.env[name]?.trim(),
+    );
+    throw new Error(`Missing env var: ${missing.join(', ')}`);
+  }
+
+  return createClient(config.url, config.publishableKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
 }
 
 export async function checkSupabaseHealth(): Promise<HealthResult> {
