@@ -12,6 +12,7 @@ export type SupabaseConfig = {
 export type HealthResult = { ok: true } | { ok: false; error: 'config' | 'unreachable' };
 
 const HEALTH_TIMEOUT_MS = 5000;
+const DATA_TIMEOUT_MS = 5000;
 
 export function getSupabaseConfig(): SupabaseConfig | null {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim().replace(/\/+$/, '');
@@ -37,6 +38,20 @@ export function createServerSupabase(): SupabaseClient {
 
   return createClient(config.url, config.publishableKey, {
     auth: { persistSession: false, autoRefreshToken: false },
+    // supabase-js retries network errors with 1 s, 2 s and 4 s waits (about 7 s total). Retries are off so an
+    // unreachable project returns 500 at once (SPEC 06 acceptance: within 6 s). Transient 503s also fail at once.
+    db: { retry: false },
+    // supabase-js sets no request timeout, so an unreachable project could hang the route (SPEC 06, acceptance: 500 within 6 s).
+    global: {
+      fetch: (input, init) =>
+        fetch(input, {
+          ...init,
+          signal: AbortSignal.any([
+            init?.signal ?? new AbortController().signal,
+            AbortSignal.timeout(DATA_TIMEOUT_MS),
+          ]),
+        }),
+    },
   });
 }
 
