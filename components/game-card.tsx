@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { useRef, type MouseEvent } from "react";
-import type { Game } from "@/lib/data";
+import Link from 'next/link';
+import { useRef, type MouseEvent } from 'react';
+import type { Game } from '@/lib/leaderboard';
 
 // Card is one link to the detail page. The PLAY label is a styled span inside the link,
 // because a button or nested <a> inside <a> is invalid HTML.
@@ -11,7 +11,7 @@ export function GameCard({ game }: { game: Game }) {
 
   const onMove = (e: MouseEvent<HTMLAnchorElement>) => {
     const el = ref.current;
-    if (!el || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!el || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const r = el.getBoundingClientRect();
     const px = (e.clientX - r.left) / r.width - 0.5;
     const py = (e.clientY - r.top) / r.height - 0.5;
@@ -19,11 +19,10 @@ export function GameCard({ game }: { game: Game }) {
   };
 
   const onLeave = () => {
-    if (ref.current) ref.current.style.transform = "";
+    if (ref.current) ref.current.style.transform = '';
   };
 
-  const variant =
-    game.color === "magenta" ? "magenta" : game.color === "yellow" ? "yellow" : "";
+  const variant = game.color === 'magenta' ? 'magenta' : game.color === 'yellow' ? 'yellow' : '';
 
   return (
     <Link
@@ -34,7 +33,7 @@ export function GameCard({ game }: { game: Game }) {
       onMouseLeave={onLeave}
     >
       <div className="cover">
-        <div className={"cover-bg " + game.cover}></div>
+        <div className={'cover-bg ' + game.cover}></div>
         <div className="label">{game.cat}</div>
       </div>
       <div className="meta">
@@ -43,9 +42,9 @@ export function GameCard({ game }: { game: Game }) {
         <div className="row">
           <div className="score-badge">
             <span>BEST SCORE</span>
-            <b>{game.best.toLocaleString("en-US")}</b>
+            <b>{game.best.toLocaleString('en-US')}</b>
           </div>
-          <span className={("btn " + variant).trim()}>PLAY</span>
+          <span className={('btn ' + variant).trim()}>PLAY</span>
         </div>
       </div>
     </Link>
