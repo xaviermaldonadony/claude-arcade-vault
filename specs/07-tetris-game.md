@@ -1,6 +1,6 @@
 # SPEC 07 — Tetris game on the TETRIS player route
 
-> **Status:** Approved
+> **Status:** Implemented
 > **Depends on:** SPEC 01, SPEC 05, SPEC 06
 > **Date:** 2026-11-22
 > **Objective:** Make `/games/tetris/play` run a playable Tetris game, ported from `references/started-games/03-tetris/` to TypeScript, that submits its real score to the leaderboard through `POST /api/scores`.
@@ -128,30 +128,30 @@ The `games` row inserted by migration `0003_add_tetris_game.sql`:
 
 ## Acceptance criteria
 
-- [ ] `npm run build`, `npm run lint` and `npx tsc --noEmit` exit 0.
-- [ ] `grep -nE "react|from 'next|window|document|localStorage" lib/tetris/types.ts lib/tetris/engine.ts lib/tetris/constants.ts` returns no matches.
-- [ ] `supabase/migrations/0003_add_tetris_game.sql` exists, and `execute_sql` `select count(*) from public.games` returns `9`.
-- [ ] `/games` lists TETRIS with the cyan cover and the PUZZLE chip filters it in.
-- [ ] `/games/tetris/play` loads with no console errors and no React hydration warning in the dev server.
-- [ ] On `/games/tetris/play` the board is drawn with 10 columns and 20 rows, and a piece spawns at the top center.
-- [ ] Left and Right arrows move the piece one column per press. Up and `X` rotate it clockwise.
-- [ ] Down moves the piece one row down and adds 1 point per cell. Space drops it to the ghost position and adds 2 points per cell.
-- [ ] Completing one row adds 100 points at level 1. Two rows at once add 300. Three add 500. Four add 800.
-- [ ] Every 10 lines the level increases by one, and the fall interval shortens by 90 milliseconds, with a floor of 100 milliseconds.
-- [ ] The 8 pieces appear, including the gray nut piece, and the NEXT preview shows the upcoming piece.
-- [ ] PAUSE, `P` and `Escape` each pause and resume. While paused, the piece, the board and the timers do not change.
-- [ ] Stacking a piece that cannot spawn ends the game, and the game-over modal opens with the real score.
-- [ ] SAVE SCORE sends `POST /api/scores` with `game: "tetris"` and gets `201`. The score appears in the Hall of Fame tab for TETRIS.
-- [ ] With the network blocked, SAVE SCORE shows `COULD NOT SAVE. TRY AGAIN` and keeps the name and score.
-- [ ] `/games/asteroids/play` still runs the Asteroids engine, and `/games/fall/play` still shows the fake ticker and `NOT RANKED YET`.
-- [ ] On a coarse pointer, `/games/tetris/play` shows `THIS GAME NEEDS A KEYBOARD`.
-- [ ] `grep -rnE "NIVEL|PUNTAJE|PAUSA|ESPACIO|Puntuación|Reiniciar" components/tetris-game.tsx lib/tetris/ components/game-player.tsx` returns no matches.
-- [ ] `localStorage` has no `tetris-theme` key after the game runs.
-- [ ] The SKIN select lists Retro, Neon, Pastel and Pixel art. Each one changes the block colors, the block drawing, and the canvas background and grid. The page stays dark.
-- [ ] After a reload, the chosen skin is still selected. A missing or unknown `tetris-skin` value shows Retro.
-- [ ] Changing the skin during a game does not pause or restart it.
-- [ ] `CLAUDE.md` Architecture names both real games and the registry, and the `AGENTS.md` block is unchanged.
-- [ ] SPEC 01 to 06 are unchanged in git (`git diff --stat specs/0[1-6]*` is empty).
+- [x] `npm run build`, `npm run lint` and `npx tsc --noEmit` exit 0.
+- [x] `grep -nE "react|from 'next|window|document|localStorage" lib/tetris/types.ts lib/tetris/engine.ts lib/tetris/constants.ts` returns no matches.
+- [x] `supabase/migrations/0003_add_tetris_game.sql` exists, and `execute_sql` `select count(*) from public.games` returns `9`.
+- [x] `/games` lists TETRIS with the cyan cover and the PUZZLE chip filters it in.
+- [x] `/games/tetris/play` loads with no console errors and no React hydration warning in the dev server.
+- [x] On `/games/tetris/play` the board is drawn with 10 columns and 20 rows, and a piece spawns at the top center.
+- [x] Left and Right arrows move the piece one column per press. Up and `X` rotate it clockwise.
+- [x] Down moves the piece one row down and adds 1 point per cell. Space drops it to the ghost position and adds 2 points per cell.
+- [x] Completing one row adds 100 points at level 1. Two rows at once add 300. Three add 500. Four add 800.
+- [x] Every 10 lines the level increases by one, and the fall interval shortens by 90 milliseconds, with a floor of 100 milliseconds.
+- [x] The 8 pieces appear, including the gray nut piece, and the NEXT preview shows the upcoming piece.
+- [x] PAUSE, `P` and `Escape` each pause and resume. While paused, the piece, the board and the timers do not change.
+- [x] Stacking a piece that cannot spawn ends the game, and the game-over modal opens with the real score.
+- [x] SAVE SCORE sends `POST /api/scores` with `game: "tetris"` and gets `201`. The score appears in the Hall of Fame tab for TETRIS.
+- [x] With the network blocked, SAVE SCORE shows `COULD NOT SAVE. TRY AGAIN` and keeps the name and score.
+- [x] `/games/asteroids/play` still runs the Asteroids engine, and `/games/fall/play` still shows the fake ticker and `NOT RANKED YET`.
+- [x] On a coarse pointer, `/games/tetris/play` shows `THIS GAME NEEDS A KEYBOARD`.
+- [x] `grep -rnE "NIVEL|PUNTAJE|PAUSA|ESPACIO|Puntuación|Reiniciar" components/tetris-game.tsx lib/tetris/ components/game-player.tsx` returns no matches.
+- [x] `localStorage` has no `tetris-theme` key after the game runs.
+- [x] The SKIN select lists Retro, Neon, Pastel and Pixel art. Each one changes the block colors, the block drawing, and the canvas background and grid. The page stays dark.
+- [x] After a reload, the chosen skin is still selected. A missing or unknown `tetris-skin` value shows Retro.
+- [x] Changing the skin during a game does not pause or restart it.
+- [x] `CLAUDE.md` Architecture names both real games and the registry, and the `AGENTS.md` block is unchanged.
+- [x] SPEC 01 to 06 are unchanged in git (`git diff --stat specs/0[1-6]*` is empty).
 
 ## Decisions
 
