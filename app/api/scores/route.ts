@@ -2,7 +2,7 @@ import { connection } from 'next/server';
 import { normalizeName, parseLimit, validateScoreSubmit } from '@/lib/leaderboard';
 import { fetchScores, gameExists, insertScore } from '@/lib/supabase/scores';
 
-// Server-only. GET reads the ranking for one game. POST saves one score (Asteroids only, SPEC 06).
+// Server-only. GET reads the ranking for one game. POST saves one score for a game in the games table (SPEC 06, SPEC 07).
 // Both return { error } with no project details on failure.
 
 const NO_STORE = { 'Cache-Control': 'no-store' };
