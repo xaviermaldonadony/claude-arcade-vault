@@ -141,7 +141,7 @@ Every step leaves `npm run dev` running with every route rendering. Step 1 chang
 
 ## Acceptance criteria
 
-- [ ] `supabase/migrations/0001_games_and_scores.sql` exists and is the only migration file in `supabase/migrations/`.
+- [ ] `supabase/migrations/0001_games_and_scores.sql` and `supabase/migrations/0002_anon_table_grants.sql` exist, and they are the only migration files in `supabase/migrations/`.
 - [ ] `list_tables` shows `public.games` and `public.scores` with RLS enabled on both.
 - [ ] `execute_sql` `select count(*) from public.games` returns `8`, and the eight ids match the ids listed in the Data model.
 - [ ] `npm run build` exits 0 with no changes to the existing env vars.
@@ -187,6 +187,8 @@ Every step leaves `npm run dev` running with every route rendering. Step 1 chang
 - **Yes:** An unknown `/games/[id]` returns a real HTTP `404`, as in SPEC 01 and SPEC 02. The page stays a server component. It reads the one `games` row with the server Supabase helper at request time, and calls `notFound()` when the row is missing. Scores and the rest of the detail UI stay in the client component. Reason: a `200` for a missing resource is wrong, and the server read keeps the existing behaviour. Quick decision, not confirmed.
 - **Yes:** The migration seeds `plays` at `0`. The mock play counts (`"12.4K"`, etc.) are dropped. Quick decision, not confirmed.
 - **Yes:** Migrations live in `supabase/migrations/` and are applied with the Supabase MCP `apply_migration` tool. This is the first `supabase/` folder in the repo. SPEC 04 said no such folder would exist yet, and that rule ends here.
+- **Yes:** Table grants are a separate migration, `0002_anon_table_grants.sql`. Step 1 created the tables and RLS policies without `GRANT SELECT` for anon, so the publishable key got `permission denied` before RLS was checked. `0001` is already applied remotely, so it was not edited.
+- **Yes:** The trigger function is `SECURITY DEFINER`, not "run as the table owner" as the Data model said. A plain trigger runs as the caller (anon), who has no update policy on `games`.
 - **No:** Supabase Auth and linking scores to users. The mock sign-in stays until an auth spec.
 - **No:** Anti-cheat beyond bounds. Signing or server-side replay would be a larger spec.
 - **No:** Edge Functions and database functions called over RPC. The trigger covers the only write-side side effect.
