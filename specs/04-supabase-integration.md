@@ -1,6 +1,6 @@
 # SPEC 04 — Supabase integration: client and health route
 
-> **Status:** Approved
+> **Status:** Implemented
 > **Depends on:** SPEC 03
 > **Date:** 2026-11-21
 > **Objective:** Connect the Next.js app to the Supabase project with a browser client, a server client, and a `GET /api/supabase/health` route that confirms the project is reachable, without creating any table or changing any existing feature.
@@ -83,22 +83,22 @@ Every step leaves `npm run dev` running with every route rendering. Steps 1 to 4
 
 ## Acceptance criteria
 
-- [ ] `npm run build` exits 0 with `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` unset.
-- [ ] `npm run lint` exits 0.
-- [ ] `npx tsc --noEmit` exits 0.
-- [ ] `package.json` lists `@supabase/supabase-js` under `dependencies`, and no other `@supabase/*` package is added.
-- [ ] `.env.example` lists `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` with placeholder values only. `git grep` for the real publishable key value finds nothing in tracked files.
-- [ ] `SUPABASE_DB_PASSWORD` is still present in `.env.example`, unchanged.
-- [ ] With both vars set to valid values in `.env.local`, `curl -i http://localhost:3000/api/supabase/health` returns `200` and body `{"ok":true}`.
-- [ ] With `NEXT_PUBLIC_SUPABASE_URL` unset, the same `curl` returns `500` and body `{"ok":false,"error":"config"}`.
-- [ ] With `NEXT_PUBLIC_SUPABASE_URL` set to `http://127.0.0.1:1`, the same `curl` returns `500` and body `{"ok":false,"error":"unreachable"}`, and returns within 6 seconds.
-- [ ] The health response body does not contain the URL or the publishable key, checked by `grep` on the `curl` output.
-- [ ] `npm run build` lists `/api/supabase/health` as dynamic (`ƒ`).
-- [ ] No file under `supabase/` exists, and `git status` shows no migration or seed file.
-- [ ] `av_scores` writes are unchanged: `components/game-player.tsx` has no diff in this spec.
-- [ ] `/`, `/games`, `/about`, and `/hall-of-fame` render with no console errors and no React hydration warning in the dev server.
-- [ ] Submitting `/about` and saving a score on the Player screen do not change any new `localStorage` key.
-- [ ] `CLAUDE.md` Architecture has one new paragraph about Supabase, and the `AGENTS.md` block is unchanged.
+- [x] `npm run build` exits 0 with `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` unset.
+- [x] `npm run lint` exits 0.
+- [x] `npx tsc --noEmit` exits 0.
+- [x] `package.json` lists `@supabase/supabase-js` under `dependencies`, and no other `@supabase/*` package is added.
+- [x] `.env.example` lists `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` with placeholder values only. `git grep` for the real publishable key value finds nothing in tracked files.
+- [x] `SUPABASE_DB_PASSWORD` is still present in `.env.example`, unchanged.
+- [x] With both vars set to valid values in `.env.local`, `curl -i http://localhost:3000/api/supabase/health` returns `200` and body `{"ok":true}`.
+- [x] With `NEXT_PUBLIC_SUPABASE_URL` unset, the same `curl` returns `500` and body `{"ok":false,"error":"config"}`.
+- [x] With `NEXT_PUBLIC_SUPABASE_URL` set to `http://127.0.0.1:1`, the same `curl` returns `500` and body `{"ok":false,"error":"unreachable"}`, and returns within 6 seconds.
+- [x] The health response body does not contain the URL or the publishable key, checked by `grep` on the `curl` output.
+- [x] `npm run build` lists `/api/supabase/health` as dynamic (`ƒ`).
+- [x] No file under `supabase/` exists, and `git status` shows no migration or seed file.
+- [x] `av_scores` writes are unchanged: `components/game-player.tsx` has no diff in this spec.
+- [x] `/`, `/games`, `/about`, and `/hall-of-fame` render with no console errors and no React hydration warning in the dev server.
+- [x] Submitting `/about` and saving a score on the Player screen do not change any new `localStorage` key.
+- [x] `CLAUDE.md` Architecture has one new paragraph about Supabase, and the `AGENTS.md` block is unchanged.
 
 ## Decisions
 
