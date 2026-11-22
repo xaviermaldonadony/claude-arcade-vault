@@ -1,28 +1,28 @@
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { Suspense } from "react";
-import { GAMES, seededScores } from "@/lib/data";
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { Suspense } from 'react';
+import { GAMES, seededScores } from '@/lib/data';
 
 // Prerender the known games. Unknown ids still render on request and hit notFound().
 export function generateStaticParams() {
   return GAMES.map((g) => ({ id: g.id }));
 }
 
-// The URL param is read inside <Suspense>, so the page shell does not block on it
-// (cacheComponents: "URL data outside of Suspense" fix).
-export default function GameDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  return (
-    <Suspense fallback={null}>
-      <GameDetail params={params} />
-    </Suspense>
-  );
-}
-
-async function GameDetail({ params }: { params: Promise<{ id: string }> }) {
+// Blocking lookup: notFound() runs before streaming starts, so unknown ids return a real 404
+// (streaming.md, Status codes). The game is resolved here, then rendered inside <Suspense>.
+export default async function GameDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const game = GAMES.find((g) => g.id === id);
   if (!game) notFound();
 
+  return (
+    <Suspense fallback={null}>
+      <GameDetail id={id} game={game} />
+    </Suspense>
+  );
+}
+
+async function GameDetail({ id, game }: { id: string; game: (typeof GAMES)[number] }) {
   // Same seed formula as the template, so the leaderboard matches the prototype.
   const scores = seededScores(id.length * 17 + 3, 10);
 
@@ -30,7 +30,7 @@ async function GameDetail({ params }: { params: Promise<{ id: string }> }) {
     <div className="av-detail">
       <div>
         <div className="detail-cover">
-          <div className={"cover-bg " + game.cover}></div>
+          <div className={'cover-bg ' + game.cover}></div>
         </div>
         <div style={{ marginTop: 20 }} className="detail-info">
           <div className="detail-tags">
@@ -50,16 +50,16 @@ async function GameDetail({ params }: { params: Promise<{ id: string }> }) {
               <div className="l">Global best</div>
               <div
                 className="v"
-                style={{ color: "var(--magenta)", textShadow: "0 0 6px rgba(255,0,110,0.5)" }}
+                style={{ color: 'var(--magenta)', textShadow: '0 0 6px rgba(255,0,110,0.5)' }}
               >
-                {game.best.toLocaleString("en-US")}
+                {game.best.toLocaleString('en-US')}
               </div>
             </div>
             <div>
               <div className="l">Difficulty</div>
               <div
                 className="v"
-                style={{ color: "var(--yellow)", textShadow: "0 0 6px rgba(245,255,0,0.5)" }}
+                style={{ color: 'var(--yellow)', textShadow: '0 0 6px rgba(245,255,0,0.5)' }}
               >
                 ★ ★ ★ ☆ ☆
               </div>
@@ -67,7 +67,7 @@ async function GameDetail({ params }: { params: Promise<{ id: string }> }) {
           </div>
           <div className="detail-actions">
             <Link href={`/games/${game.id}/play`} className="btn xl">
-              ▶  PLAY NOW
+              ▶ PLAY NOW
             </Link>
             <Link href="/" className="btn ghost lg">
               BACK TO THE VAULT
@@ -82,16 +82,18 @@ async function GameDetail({ params }: { params: Promise<{ id: string }> }) {
           {scores.map((r, i) => (
             <div
               key={r.rank}
-              className={"lb-row" + (i === 0 ? " top1" : i === 1 ? " top2" : i === 2 ? " top3" : "")}
+              className={
+                'lb-row' + (i === 0 ? ' top1' : i === 1 ? ' top2' : i === 2 ? ' top3' : '')
+              }
             >
-              <div className="rk">#{String(r.rank).padStart(2, "0")}</div>
+              <div className="rk">#{String(r.rank).padStart(2, '0')}</div>
               <div className="pl">
                 {r.name}
-                <div style={{ fontSize: 10, color: "var(--ink-faint)", letterSpacing: "0.1em" }}>
+                <div style={{ fontSize: 10, color: 'var(--ink-faint)', letterSpacing: '0.1em' }}>
                   {r.date}
                 </div>
               </div>
-              <div className="sc">{r.score.toLocaleString("en-US")}</div>
+              <div className="sc">{r.score.toLocaleString('en-US')}</div>
             </div>
           ))}
         </div>
