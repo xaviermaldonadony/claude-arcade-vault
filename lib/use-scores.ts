@@ -18,6 +18,8 @@ export function useScores(
   const [result, setResult] = useState<Result | null>(null);
 
   useEffect(() => {
+    // No game yet (for example, the Hall of Fame before its games load): nothing to fetch.
+    if (!gameId) return;
     const controller = new AbortController();
 
     const params = new URLSearchParams({ game: gameId, limit: String(limit) });
