@@ -4,23 +4,13 @@ import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/components/auth-provider';
 import { AsteroidsGame } from '@/components/asteroids-game';
-import type { Game } from '@/lib/data';
+import type { Game } from '@/lib/leaderboard';
 
 // Fake ticker and arena for the games without an engine yet. Asteroids runs the real engine.
-const SCORES_KEY = 'av_scores';
+// Only Asteroids submits scores (SPEC 06). Scores are saved with POST /api/scores, not localStorage.
 const MAX_NAME_LENGTH = 10;
 
-type SavedScore = { game: string; score: number; name: string; at: number };
-
-function saveScore(entry: Omit<SavedScore, 'at'>) {
-  try {
-    const all: SavedScore[] = JSON.parse(localStorage.getItem(SCORES_KEY) || '[]');
-    all.push({ ...entry, at: Date.now() });
-    localStorage.setItem(SCORES_KEY, JSON.stringify(all));
-  } catch {
-    // Storage unavailable or corrupt: the score is not saved.
-  }
-}
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 export function GamePlayer({ game }: { game: Game }) {
   const { user } = useAuth();
@@ -33,7 +23,7 @@ export function GamePlayer({ game }: { game: Game }) {
   const [gameKey, setGameKey] = useState(0);
   const [paused, setPaused] = useState(false);
   const [over, setOver] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   // null means "not edited yet": show the signed-in name, or GUEST.
   const [nameDraft, setNameDraft] = useState<string | null>(null);
 
@@ -66,7 +56,23 @@ export function GamePlayer({ game }: { game: Game }) {
     setGameKey((k) => k + 1);
     setPaused(false);
     setOver(false);
-    setSaved(false);
+    setSaveStatus('idle');
+  };
+
+  // Sends the score once per click. The button is disabled while the request is open.
+  const submitScore = async () => {
+    setSaveStatus('saving');
+    try {
+      const res = await fetch('/api/scores', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ game: game.id, name: name.trim() || 'GUEST', score }),
+        cache: 'no-store',
+      });
+      setSaveStatus(res.status === 201 ? 'saved' : 'error');
+    } catch {
+      setSaveStatus('error');
+    }
   };
 
   return (
@@ -160,29 +166,37 @@ export function GamePlayer({ game }: { game: Game }) {
             <h2>GAME OVER</h2>
             <div className="final-label">FINAL SCORE</div>
             <div className="final">{score.toLocaleString('en-US')}</div>
-            {!saved ? (
-              <div className="input-row">
-                <input
-                  value={name}
-                  onChange={(e) =>
-                    setNameDraft(e.target.value.toUpperCase().slice(0, MAX_NAME_LENGTH))
-                  }
-                  placeholder="YOUR INITIALS"
-                  aria-label="Player name"
-                />
-                <button
-                  type="button"
-                  className="btn yellow"
-                  onClick={() => {
-                    saveScore({ game: game.id, score, name: name.trim() || 'GUEST' });
-                    setSaved(true);
-                  }}
-                >
-                  SAVE SCORE
-                </button>
-              </div>
-            ) : (
+            {!isRealGame ? (
+              <div>NOT RANKED YET</div>
+            ) : saveStatus === 'saved' ? (
               <div>SCORE SAVED</div>
+            ) : (
+              <>
+                <div className="input-row">
+                  <input
+                    value={name}
+                    onChange={(e) =>
+                      setNameDraft(e.target.value.toUpperCase().slice(0, MAX_NAME_LENGTH))
+                    }
+                    placeholder="YOUR INITIALS"
+                    aria-label="Player name"
+                    disabled={saveStatus === 'saving'}
+                  />
+                  <button
+                    type="button"
+                    className="btn yellow"
+                    disabled={saveStatus === 'saving'}
+                    onClick={submitScore}
+                  >
+                    {saveStatus === 'saving' ? 'SAVING' : 'SAVE SCORE'}
+                  </button>
+                </div>
+                {saveStatus === 'error' && (
+                  <div style={{ color: 'var(--magenta)', marginTop: 10 }}>
+                    COULD NOT SAVE. TRY AGAIN
+                  </div>
+                )}
+              </>
             )}
             <div className="actions">
               <button type="button" className="btn" onClick={restart}>
