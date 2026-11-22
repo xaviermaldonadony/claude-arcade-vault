@@ -11,9 +11,13 @@ export function GameDetail({ game }: { game: Game }) {
   return (
     <div className="av-detail">
       <div>
-        <div className="detail-cover">
+        <Link
+          href={`/games/${game.id}/play`}
+          className="detail-cover"
+          aria-label={`Play ${game.title}`}
+        >
           <div className={'cover-bg ' + game.cover}></div>
-        </div>
+        </Link>
         <div style={{ marginTop: 20 }} className="detail-info">
           <div className="detail-tags">
             <span>{game.cat}</span>

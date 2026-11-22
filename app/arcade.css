@@ -842,6 +842,24 @@ a {
   border: 1px solid var(--line);
   overflow: hidden;
 }
+/* The cover is a link to the player. Block display keeps aspect-ratio working on the anchor. */
+a.detail-cover {
+  display: block;
+  cursor: pointer;
+  transition:
+    border-color 180ms,
+    box-shadow 180ms;
+}
+a.detail-cover:hover {
+  border-color: var(--cyan);
+  box-shadow:
+    0 18px 40px -10px rgba(0, 245, 255, 0.4),
+    0 0 0 1px rgba(0, 245, 255, 0.3);
+}
+a.detail-cover:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 4px;
+}
 .detail-info {
   display: flex;
   flex-direction: column;
