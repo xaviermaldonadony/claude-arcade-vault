@@ -1,21 +1,21 @@
-"use client";
+'use client';
 
-import { useMemo, useState } from "react";
-import { CATS, GAMES } from "@/lib/data";
-import { GameCard } from "@/components/game-card";
+import { useMemo, useState } from 'react';
+import { CATS } from '@/lib/data';
+import { useGames } from '@/lib/use-games';
+import { GameCard } from '@/components/game-card';
 
 export function Library() {
-  const [q, setQ] = useState("");
-  const [cat, setCat] = useState("ALL");
+  const [q, setQ] = useState('');
+  const [cat, setCat] = useState('ALL');
+  const { games, status } = useGames();
 
   const filtered = useMemo(
     () =>
-      GAMES.filter(
-        (g) =>
-          (cat === "ALL" || g.cat === cat) &&
-          g.title.toLowerCase().includes(q.toLowerCase()),
+      games.filter(
+        (g) => (cat === 'ALL' || g.cat === cat) && g.title.toLowerCase().includes(q.toLowerCase()),
       ),
-    [q, cat],
+    [games, q, cat],
   );
 
   return (
@@ -42,7 +42,7 @@ export function Library() {
             <button
               key={c}
               type="button"
-              className={"chip" + (cat === c ? " active" : "")}
+              className={'chip' + (cat === c ? ' active' : '')}
               onClick={() => setCat(c)}
             >
               {c}
@@ -52,21 +52,47 @@ export function Library() {
       </div>
 
       <div className="av-grid">
-        {filtered.map((g) => (
-          <GameCard key={g.id} game={g} />
-        ))}
-        {filtered.length === 0 && (
+        {status === 'loading' && (
+          <div
+            className="pixel"
+            style={{
+              gridColumn: '1 / -1',
+              textAlign: 'center',
+              padding: 80,
+              color: 'var(--ink-faint)',
+              fontSize: 12,
+            }}
+          >
+            LOADING
+          </div>
+        )}
+        {status === 'error' && (
+          <div
+            className="pixel"
+            style={{
+              gridColumn: '1 / -1',
+              textAlign: 'center',
+              padding: 80,
+              color: 'var(--magenta)',
+              fontSize: 12,
+            }}
+          >
+            GAMES UNAVAILABLE
+          </div>
+        )}
+        {status === 'ready' && filtered.map((g) => <GameCard key={g.id} game={g} />)}
+        {status === 'ready' && filtered.length === 0 && (
           <div
             style={{
-              gridColumn: "1 / -1",
-              textAlign: "center",
+              gridColumn: '1 / -1',
+              textAlign: 'center',
               padding: 80,
-              color: "var(--ink-faint)",
+              color: 'var(--ink-faint)',
             }}
           >
             <div
               className="pixel"
-              style={{ fontSize: 14, color: "var(--magenta)", marginBottom: 12 }}
+              style={{ fontSize: 14, color: 'var(--magenta)', marginBottom: 12 }}
             >
               NO RESULTS
             </div>
