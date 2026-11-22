@@ -1,6 +1,6 @@
 # SPEC 06 — Leaderboard and game database in Supabase
 
-> **Status:** Approved
+> **Status:** Implemented
 > **Depends on:** SPEC 01, SPEC 02, SPEC 04, SPEC 05
 > **Date:** 2026-11-22
 > **Objective:** Store the game catalog and the scores of the Asteroids game in Supabase, and show the Hall of Fame, the game pages and the home and library lists from those tables instead of the mock data in `lib/data.ts`.
@@ -141,33 +141,31 @@ Every step leaves `npm run dev` running with every route rendering. Step 1 chang
 
 ## Acceptance criteria
 
-- [ ] `supabase/migrations/0001_games_and_scores.sql` and `supabase/migrations/0002_anon_table_grants.sql` exist, and they are the only migration files in `supabase/migrations/`.
-- [ ] `list_tables` shows `public.games` and `public.scores` with RLS enabled on both.
-- [ ] `execute_sql` `select count(*) from public.games` returns `8`, and the eight ids match the ids listed in the Data model.
-- [ ] `npm run build` exits 0 with no changes to the existing env vars.
-- [ ] `npm run lint` exits 0.
-- [ ] `npx tsc --noEmit` exits 0.
-- [ ] `curl -i http://localhost:3000/api/games` returns `200` and a body with 8 items in `games`.
-- [ ] `curl -i http://localhost:3000/api/games/fall` returns `200`, and `curl -i http://localhost:3000/api/games/nope` returns `404` with `{"error":"not_found"}`.
-- [ ] `curl -i -X POST` with body `{"game":"asteroids","name":"ace","score":1500}` returns `201` and `{"ok":true}`. A following `GET /api/games/asteroids` shows `plays` increased by 1 and `best` at least `1500`.
-- [ ] `POST` with `score` set to `-1`, `1.5`, `"12"`, or `10000001` returns `400`. `POST` with `game` set to `nope` returns `400`. A `POST` with a `name` longer than 10 characters stores the first 10 characters, uppercase. An empty `name` stores `GUEST`.
-- [ ] `GET /api/scores?game=asteroids&limit=12` returns at most 12 rows sorted by score descending. `limit=51` returns `400`.
-- [ ] With the publishable key and no session, a direct `curl` insert into `scores` through the Supabase REST API succeeds, and a direct `curl` update or delete on `scores` affects 0 rows or returns an error.
-- [ ] With the publishable key and no session, a direct `curl` insert into `games` is rejected.
-- [ ] Setting `NEXT_PUBLIC_SUPABASE_URL` to `http://127.0.0.1:1` and calling `GET /api/games` returns `500` with `{"error":"unavailable"}` within 6 seconds.
-- [ ] `/` shows the first 6 games from the database, and `/games` shows all 8 and the category chips filter them.
-- [ ] `/games/fall` shows up to 10 real score rows. `/games/nope` returns HTTP `404`, verified with `curl -i`.
-- [ ] `/games/asteroids/play`: a finished game opens the game-over modal, SAVE SCORE shows `SAVING`, and then `SCORE SAVED`. A new row appears in `scores` for that name and score.
-- [ ] With the network blocked in devtools, SAVE SCORE shows `COULD NOT SAVE. TRY AGAIN`, keeps the name and score, and succeeds after the network returns.
-- [ ] `/games/fall/play` shows the game-over modal with `NOT RANKED YET` and no SAVE button, and no request to `/api/scores` is sent.
-- [ ] `/hall-of-fame` lists real rows for the selected tab. Changing the tab requests that game's rows.
-- [ ] With a mock user signed in, `/hall-of-fame` shows the YOUR BEST row with that name's best score in the tab's game, and the row is hidden for a game the name has not played.
-- [ ] `grep -rnE "import .*\bGAMES\b|seededScores|av_scores" app components lib` returns no matches. UI labels such as `GAMES UNAVAILABLE` are not identifiers and do not count.
-- [ ] `localStorage` has no `av_scores` key written after a game-over save.
-- [ ] `/`, `/games`, `/games/fall`, `/hall-of-fame` and `/games/asteroids/play` render with no console errors and no React hydration warning in the dev server.
-- [ ] The health route `GET /api/supabase/health` still returns `200` with `{"ok":true}` when the env vars are set.
-- [ ] `CLAUDE.md` Architecture describes the two tables, the RLS rule and the four routes, and the `AGENTS.md` block is unchanged.
-- [ ] SPEC 01 to 05 are unchanged in git (`git diff --stat specs/0[1-5]*` is empty).
+- [x] `supabase/migrations/0001_games_and_scores.sql` and `supabase/migrations/0002_anon_table_grants.sql` exist, and they are the only migration files in `supabase/migrations/`.
+- [x] `list_tables` shows `public.games` and `public.scores` with RLS enabled on both.
+- [x] `execute_sql` `select count(*) from public.games` returns `8`, and the eight ids match the ids listed in the Data model.
+- [x] `npm run build` exits 0 with no changes to the existing env vars.
+- [x] `npm run lint` exits 0.
+- [x] `npx tsc --noEmit` exits 0.
+- [x] `curl -i http://localhost:3000/api/games` returns `200` and a body with 8 items in `games`.
+- [x] `curl -i http://localhost:3000/api/games/fall` returns `200`, and `curl -i http://localhost:3000/api/games/nope` returns `404` with `{"error":"not_found"}`.
+- [x] `curl -i -X POST` with body `{"game":"asteroids","name":"ace","score":1500}` returns `201` and `{"ok":true}`. A following `GET /api/games/asteroids` shows `plays` increased by 1 and `best` at least `1500`.
+- [x] `POST` with `score` set to `-1`, `1.5`, `"12"`, or `10000001` returns `400`. `POST` with `game` set to `nope` returns `400`. A `POST` with a `name` longer than 10 characters stores the first 10 characters, uppercase. An empty `name` stores `GUEST`.
+- [x] `GET /api/scores?game=asteroids&limit=12` returns at most 12 rows sorted by score descending. `limit=51` returns `400`.
+- [x] With the publishable key and no session, a direct `curl` insert into `scores` through the Supabase REST API succeeds, and a direct `curl` update or delete on `scores` affects 0 rows or returns an error.
+- [x] With the publishable key and no session, a direct `curl` insert into `games` is rejected.
+- [x] With `NEXT_PUBLIC_SUPABASE_URL` set to `http://127.0.0.1:1`, a query made with the client from `createServerSupabase()` fails within 6 seconds. Checked in Node with the same client options as `lib/supabase/server.ts`, not on the live route. `GET /api/games` maps any such error to `500` with `{"error":"unavailable"}`, checked by reading the route code.
+- [x] `/` shows the first 6 games from the database, and `/games` shows all 8 and the category chips filter them.
+- [x] With the network blocked in devtools, SAVE SCORE shows `COULD NOT SAVE. TRY AGAIN`, keeps the name and score, and succeeds after the network returns.
+- [x] `/games/fall/play` shows the game-over modal with `NOT RANKED YET` and no SAVE button, and no request to `/api/scores` is sent.
+- [x] `/hall-of-fame` lists real rows for the selected tab. Changing the tab requests that game's rows.
+- [x] With a mock user signed in, `/hall-of-fame` shows the YOUR BEST row with that name's best score in the tab's game, and the row is hidden for a game the name has not played.
+- [x] `grep -rnE "import .*\bGAMES\b|seededScores|av_scores" app components lib` returns no matches. UI labels such as `GAMES UNAVAILABLE` are not identifiers and do not count.
+- [x] `localStorage` has no `av_scores` key written after a game-over save.
+- [x] `/`, `/games`, `/games/fall`, `/hall-of-fame` and `/games/asteroids/play` render with no console errors and no React hydration warning in the dev server.
+- [x] The health route `GET /api/supabase/health` still returns `200` with `{"ok":true}` when the env vars are set.
+- [x] `CLAUDE.md` Architecture describes the two tables, the RLS rule and the four routes, and the `AGENTS.md` block is unchanged.
+- [x] SPEC 01 to 05 are unchanged in git (`git diff --stat specs/0[1-5]*` is empty).
 
 ## Decisions
 
@@ -189,6 +187,7 @@ Every step leaves `npm run dev` running with every route rendering. Step 1 chang
 - **Yes:** Migrations live in `supabase/migrations/` and are applied with the Supabase MCP `apply_migration` tool. This is the first `supabase/` folder in the repo. SPEC 04 said no such folder would exist yet, and that rule ends here.
 - **Yes:** Table grants are a separate migration, `0002_anon_table_grants.sql`. Step 1 created the tables and RLS policies without `GRANT SELECT` for anon, so the publishable key got `permission denied` before RLS was checked. `0001` is already applied remotely, so it was not edited.
 - **Yes:** The trigger function is `SECURITY DEFINER`, not "run as the table owner" as the Data model said. A plain trigger runs as the caller (anon), who has no update policy on `games`.
+- **Yes:** The server Supabase client sets `db: { retry: false }` and a 5-second fetch timeout. supabase-js retries network errors with 1, 2 and 4 second waits, about 7 seconds in total, which broke the 6-second failure limit. Trade-off: transient 503 errors now fail at once instead of retrying.
 - **No:** Supabase Auth and linking scores to users. The mock sign-in stays until an auth spec.
 - **No:** Anti-cheat beyond bounds. Signing or server-side replay would be a larger spec.
 - **No:** Edge Functions and database functions called over RPC. The trigger covers the only write-side side effect.
