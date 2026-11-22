@@ -9,12 +9,18 @@ const WHITE = '#fff';
 
 const BOARD_W = COLS * BLOCK;
 const BOARD_H = ROWS * BLOCK;
+// NEXT panel: 120 by 120, to the right of the board, top aligned. Cells are BLOCK px, a 4 by 4 grid.
+const NEXT_X = BOARD_W;
+const NEXT_Y = 0;
+const NEXT_CELLS = 4;
 
+// (px, py) is the top-left of the cell in canvas pixels.
 function drawBlock(
   ctx: CanvasRenderingContext2D,
   skin: Skin,
-  x: number,
-  y: number,
+  px: number,
+  py: number,
+  size: number,
   value: number,
   alpha: number,
 ): void {
@@ -22,21 +28,37 @@ function drawBlock(
   const color = skin.colors[value];
   if (!color) return;
   ctx.globalAlpha = alpha;
-  skin.drawCell(ctx, x * BLOCK + 1, y * BLOCK + 1, BLOCK - 2, color);
+  skin.drawCell(ctx, px + 1, py + 1, size - 2, color);
   ctx.globalAlpha = 1;
 }
 
-function drawShape(
+function drawShapeOnBoard(
   ctx: CanvasRenderingContext2D,
   skin: Skin,
   shape: number[][],
-  ox: number,
-  oy: number,
+  col: number,
+  row: number,
   alpha: number,
 ): void {
   for (let r = 0; r < shape.length; r++)
     for (let c = 0; c < shape[r].length; c++)
-      if (shape[r][c]) drawBlock(ctx, skin, ox + c, oy + r, shape[r][c], alpha);
+      drawBlock(ctx, skin, (col + c) * BLOCK, (row + r) * BLOCK, BLOCK, shape[r][c], alpha);
+}
+
+function drawNext(ctx: CanvasRenderingContext2D, skin: Skin, shape: number[][]): void {
+  const offX = Math.floor((NEXT_CELLS - shape[0].length) / 2);
+  const offY = Math.floor((NEXT_CELLS - shape.length) / 2);
+  for (let r = 0; r < shape.length; r++)
+    for (let c = 0; c < shape[r].length; c++)
+      drawBlock(
+        ctx,
+        skin,
+        NEXT_X + (offX + c) * BLOCK,
+        NEXT_Y + (offY + r) * BLOCK,
+        BLOCK,
+        shape[r][c],
+        1,
+      );
 }
 
 function drawGrid(ctx: CanvasRenderingContext2D, skin: Skin): void {
@@ -67,6 +89,7 @@ function drawOverlay(ctx: CanvasRenderingContext2D, title: string, sub: string):
 }
 
 // Draw one frame in the given skin. `_now` is unused: Tetris has no timed visuals.
+// Expects a canvas of BOARD_W + 120 by BOARD_H pixels (420 by 600).
 export function drawTetris(
   ctx: CanvasRenderingContext2D,
   state: TetrisState,
@@ -76,15 +99,18 @@ export function drawTetris(
   const skin = SKINS[skinId];
 
   ctx.fillStyle = skin.canvasBg;
-  ctx.fillRect(0, 0, BOARD_W, BOARD_H);
+  ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   drawGrid(ctx, skin);
 
   for (let r = 0; r < ROWS; r++)
-    for (let c = 0; c < COLS; c++) drawBlock(ctx, skin, c, r, state.board[r][c], 1);
+    for (let c = 0; c < COLS; c++)
+      drawBlock(ctx, skin, c * BLOCK, r * BLOCK, BLOCK, state.board[r][c], 1);
 
   const { current } = state;
-  drawShape(ctx, skin, current.shape, current.x, ghostY(state), skin.ghostAlpha);
-  drawShape(ctx, skin, current.shape, current.x, current.y, 1);
+  drawShapeOnBoard(ctx, skin, current.shape, current.x, ghostY(state), skin.ghostAlpha);
+  drawShapeOnBoard(ctx, skin, current.shape, current.x, current.y, 1);
+
+  drawNext(ctx, skin, state.next.shape);
 
   if (state.status === 'gameover') {
     drawOverlay(ctx, 'GAME OVER', `FINAL SCORE: ${state.score}`);
