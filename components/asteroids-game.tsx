@@ -22,30 +22,30 @@ const serverCoarse = (): boolean => false;
 type Props = {
   // Controlled by the player. true pauses the engine, false resumes it.
   paused: boolean;
-  // Called when the score changes.
-  onScore: (score: number) => void;
+  // Called when score, lives, or level change.
+  onStats: (stats: { score: number; lives: number; level: number }) => void;
   // Called once when the game reaches game over, with the final score.
   onEnd: (score: number) => void;
   // Called when P or Escape is pressed, so the player can toggle its paused state.
   onTogglePause?: () => void;
 };
 
-export function AsteroidsGame({ paused, onScore, onEnd, onTogglePause }: Props) {
+export function AsteroidsGame({ paused, onStats, onEnd, onTogglePause }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   // Coarse pointer means a touch device. Touch controls are out of scope.
   const needsKeyboard = useSyncExternalStore(subscribeCoarse, readCoarse, serverCoarse);
 
   // Latest props, read by the frame loop without restarting it.
   const pausedRef = useRef(paused);
-  const onScoreRef = useRef(onScore);
+  const onStatsRef = useRef(onStats);
   const onEndRef = useRef(onEnd);
   const onTogglePauseRef = useRef(onTogglePause);
   useEffect(() => {
     pausedRef.current = paused;
-    onScoreRef.current = onScore;
+    onStatsRef.current = onStats;
     onEndRef.current = onEnd;
     onTogglePauseRef.current = onTogglePause;
-  }, [paused, onScore, onEnd, onTogglePause]);
+  }, [paused, onStats, onEnd, onTogglePause]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -55,7 +55,9 @@ export function AsteroidsGame({ paused, onScore, onEnd, onTogglePause }: Props) 
     const keyboard = attachKeyboard(window);
     let state: AsteroidsState = createGame();
     let lastTs: number | null = null;
-    let lastScore = state.score;
+    let lastScore = -1;
+    let lastLives = -1;
+    let lastLevel = -1;
     let ended = false;
     let frameId = 0;
 
@@ -68,9 +70,11 @@ export function AsteroidsGame({ paused, onScore, onEnd, onTogglePause }: Props) 
       state = setPaused(state, pausedRef.current);
       state = step(state, keyboard.read(), dt);
 
-      if (state.score !== lastScore) {
+      if (state.score !== lastScore || state.lives !== lastLives || state.level !== lastLevel) {
         lastScore = state.score;
-        onScoreRef.current(state.score);
+        lastLives = state.lives;
+        lastLevel = state.level;
+        onStatsRef.current({ score: state.score, lives: state.lives, level: state.level });
       }
       if (state.status === 'gameover' && !ended) {
         ended = true;

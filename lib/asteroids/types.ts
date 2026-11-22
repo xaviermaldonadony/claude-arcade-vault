@@ -33,6 +33,7 @@ export type Ship = {
   invincible: number; // seconds left
   shootCooldown: number; // seconds left
   tripleShot: number; // seconds left
+  thrusting: boolean; // true while Up is held, drives the thruster flame
 };
 
 export type AsteroidsState = {

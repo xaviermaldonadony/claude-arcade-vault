@@ -222,6 +222,7 @@ function respawnShip(tripleShot: number): Ship {
     invincible: RESPAWN_INVINCIBLE,
     shootCooldown: 0,
     tripleShot,
+    thrusting: false,
   };
 }
 
@@ -252,6 +253,7 @@ function updateShip(ship: Ship, input: AsteroidsInput, dt: number): Ship {
     invincible: tick(ship.invincible, dt),
     shootCooldown: tick(ship.shootCooldown, dt),
     tripleShot: tick(ship.tripleShot, dt),
+    thrusting: input.thrust,
   };
 }
 

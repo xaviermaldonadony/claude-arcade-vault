@@ -74,6 +74,16 @@ function drawShip(ctx: CanvasRenderingContext2D, ship: Ship): void {
   ctx.lineTo(-12, 9);
   ctx.closePath();
   ctx.stroke();
+
+  // Thruster flame, flickering as in the reference.
+  if (ship.thrusting && Math.random() > 0.35) {
+    ctx.beginPath();
+    ctx.moveTo(-8, -4);
+    ctx.lineTo(-8 - (6 + Math.random() * 8), 0);
+    ctx.lineTo(-8, 4);
+    ctx.strokeStyle = 'rgba(255, 130, 0, 0.85)';
+    ctx.stroke();
+  }
   ctx.restore();
 }
 

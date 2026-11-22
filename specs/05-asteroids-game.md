@@ -79,6 +79,7 @@ export type Ship = {
   invincible: number; // seconds left
   shootCooldown: number; // seconds left
   tripleShot: number; // seconds left
+  thrusting: boolean; // true while Up is held, drives the thruster flame
 };
 
 export type AsteroidsState = {
@@ -121,7 +122,7 @@ No new `localStorage` keys. No new cookies.
 3. **Pure engine.** Create `lib/asteroids/engine.ts` exporting `createGame(rng?)`, `step(state, input, dt, rng?)`, and small helpers for wrap, distance, spawn, split, and collisions. It has no DOM, canvas, or React imports. Port the logic of `update()` in the reference, including the dead-state timer, the level-complete check, and the same order of collision checks. Verify with `npx tsc --noEmit`. Nothing imports it yet.
 4. **Rendering.** Create `lib/asteroids/render.ts` exporting `drawGame(ctx, state, now)` that draws the same shapes as the reference: ship silhouette with thruster flame, asteroid polygons, bullets, particles, power-up square with its `3x` label, the HUD line, and the overlay for `gameover` and `paused`. All text is English (SCORE, LEVEL, LIVES, GAME OVER, FINAL SCORE, PAUSED). Verify with `npx tsc --noEmit`.
 5. **Input.** Create `lib/asteroids/input.ts` exporting a small keyboard tracker, with `keydown` and `keyup` on `window` and `preventDefault` for the arrow keys and Space while the game has focus. It reads `ArrowLeft`, `ArrowRight`, `ArrowUp`, `Space`, `KeyP`, and `Escape`. It is removed on unmount. Verify with `npx tsc --noEmit`.
-6. **Canvas component.** Create `components/asteroids-game.tsx` (client). It owns a `<canvas width={800} height={600}>`, runs `requestAnimationFrame` inside `useEffect`, calls `step` and `drawGame` each frame, and cancels the frame on unmount. It takes props `onScore(score: number)` and `onEnd(score: number)` and a `paused` prop controlled by the player. It shows a note with the text `THIS GAME NEEDS A KEYBOARD` when the device has no fine pointer (`matchMedia('(pointer: coarse)')`). Verify with `npm run build`, which must still exit 0 with no game code running at build time.
+6. **Canvas component.** Create `components/asteroids-game.tsx` (client). It owns a `<canvas width={800} height={600}>`, runs `requestAnimationFrame` inside `useEffect`, calls `step` and `drawGame` each frame, and cancels the frame on unmount. It takes props `onStats({ score, lives, level })`, fired when any of those change, `onEnd(score: number)`, a `paused` prop controlled by the player, and an optional `onTogglePause()` called on `P` or `Escape`. It shows a note with the text `THIS GAME NEEDS A KEYBOARD` when the device has no fine pointer (`matchMedia('(pointer: coarse)')`). Verify with `npm run build`, which must still exit 0 with no game code running at build time.
 7. **Wire into the player.** In `components/game-player.tsx`, when the game id is `asteroids`, render `AsteroidsGame` in the arena instead of the fake ticker and fake arena. The HUD score, the lives, and the level come from the real game through the callbacks. PAUSE and RESUME control the game through the `paused` prop, and `P` and `Escape` toggle the same state. END opens the existing game-over modal with the real score. The other game ids keep the current code path with no change. Before editing the player, read the relevant guides in `node_modules/next/dist/docs/` as `AGENTS.md` requires, and use the `/frontend-design` skill for the HUD and overlay styling, as `CLAUDE.md` requires for UI.
 8. **Save and restart.** SAVE SCORE for `asteroids` writes `{ game: "asteroids", score, name, at }` to `av_scores`, using the real score and the same name rules as SPEC 01. PLAY AGAIN resets the engine with `createGame()`. The game-over modal and its buttons come from SPEC 01 and are not redesigned.
 9. **Touch note and docs.** Show the keyboard note from step 6 on coarse pointers. Add one short paragraph to `CLAUDE.md` Architecture: the `lib/asteroids/` modules, the client canvas component, and that only the `asteroids` game runs the real engine. Do not touch the `AGENTS.md` block. Do not edit SPEC 01 or SPEC 02.
@@ -173,6 +174,8 @@ Every step leaves `npm run dev` running with every route rendering. Step 1 chang
 - **No:** UFOs. The reference game does not have them.
 - **Yes:** The catalog copy (`short`, `long`) for ASTEROIDS is not changed in this spec.
 - **Yes:** `dt` clamped to 0.05 seconds per frame, as in the reference.
+- **Yes:** `Ship.thrusting` is set from the Up key each frame, so the renderer draws the thruster flame from state alone.
+- **Yes:** One `onStats({ score, lives, level })` callback replaces the score-only callback. The player HUD reads everything from it.
 
 ## Identified risks
 
