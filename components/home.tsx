@@ -9,7 +9,7 @@ import { useGames } from '@/lib/use-games';
 
 // Landing page at "/" (SPEC 02, step 7). Sections, in order: hero, // 01 features,
 // // 02 games preview, stats, // 03 live activity, // 04 pricing and FAQ, final CTA.
-// All data is static mock data from lib/data.ts. Nothing here writes to storage.
+// The games preview reads the games table (SPEC 06). The rest is static mock data from lib/data.ts. Nothing here writes to storage.
 export function Home() {
   const rootRef = useRef<HTMLDivElement>(null);
   const { games, status: gamesStatus } = useGames();

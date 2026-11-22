@@ -162,7 +162,7 @@ Every step leaves `npm run dev` running with every route rendering. Step 1 chang
 - [ ] `/games/fall/play` shows the game-over modal with `NOT RANKED YET` and no SAVE button, and no request to `/api/scores` is sent.
 - [ ] `/hall-of-fame` lists real rows for the selected tab. Changing the tab requests that game's rows.
 - [ ] With a mock user signed in, `/hall-of-fame` shows the YOUR BEST row with that name's best score in the tab's game, and the row is hidden for a game the name has not played.
-- [ ] `grep -rn "GAMES\|seededScores\|av_scores" app components lib` returns no matches.
+- [ ] `grep -rnE "import .*\bGAMES\b|seededScores|av_scores" app components lib` returns no matches. UI labels such as `GAMES UNAVAILABLE` are not identifiers and do not count.
 - [ ] `localStorage` has no `av_scores` key written after a game-over save.
 - [ ] `/`, `/games`, `/games/fall`, `/hall-of-fame` and `/games/asteroids/play` render with no console errors and no React hydration warning in the dev server.
 - [ ] The health route `GET /api/supabase/health` still returns `200` with `{"ok":true}` when the env vars are set.
