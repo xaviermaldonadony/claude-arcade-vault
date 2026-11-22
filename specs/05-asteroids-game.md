@@ -1,6 +1,6 @@
 # SPEC 05 — Asteroids game on the ASTEROIDS player route
 
-> **Status:** Approved
+> **Status:** Implemented
 > **Depends on:** SPEC 01, SPEC 02
 > **Date:** 2026-11-21
 > **Objective:** Make `/games/asteroids/play` run a playable Asteroids game, ported from `references/started-games/02-asteroids/` to TypeScript, that reports its real score to the existing PAUSE, END, and SAVE SCORE controls, while every other game keeps its fake ticker.
@@ -131,30 +131,30 @@ Every step leaves `npm run dev` running with every route rendering. Step 1 chang
 
 ## Acceptance criteria
 
-- [ ] `npm run build` exits 0.
-- [ ] `npm run lint` exits 0.
-- [ ] `npx tsc --noEmit` exits 0.
-- [ ] `lib/asteroids/engine.ts` and `lib/asteroids/types.ts` contain no import from `react` or `next`, and no use of `window`, `document`, or `localStorage`, checked by `grep`.
-- [ ] `/games/asteroids/play` loads with no console errors and no React hydration warning in the dev server.
-- [ ] On `/games/asteroids/play`, the canvas is visible and the ship is drawn at the center of the field at start.
-- [ ] Left and Right arrows rotate the ship, and Up thrusts it. Pressing and holding Space fires bullets at the rate of one shot per 0.2 seconds.
-- [ ] A ship that moves past one edge of the field appears at the opposite edge, in both axes.
-- [ ] Destroying a large asteroid adds 20 points, a medium one adds 50, and a small one adds 100. The HUD score updates to match.
-- [ ] A large asteroid splits into two medium asteroids, and a medium one splits into two small ones. Small asteroids do not split.
-- [ ] Clearing all asteroids starts the next level. The HUD level increases by one, and the number of asteroids is 3 plus the new level number.
-- [ ] Colliding with an asteroid while not invincible removes one life. The ship respawns at the center with 3 seconds of invincibility, shown as blinking.
-- [ ] With 0 lives left, the game-over modal opens with the real score.
-- [ ] Destroying 5 asteroids in a row without a power-up drop produces a power-up. Only one power-up is on the field per level.
-- [ ] Collecting a power-up turns on triple shot for 5 seconds, shown in the HUD as `3x` with a countdown.
-- [ ] PAUSE, the `P` key, and the `Escape` key each pause the game, and each resumes it. While paused, the ship, asteroids, and timers do not change.
-- [ ] END opens the game-over modal with the current score.
-- [ ] As a guest, SAVE SCORE on `asteroids` writes one entry to `localStorage.av_scores` with `game: "asteroids"`, the real score, and the name typed, and shows `SCORE SAVED`.
-- [ ] PLAY AGAIN starts a new game with score 0, 3 lives, and level 1.
-- [ ] Every other game, for example `/games/fall/play`, still shows the fake ticker and works as in SPEC 01.
-- [ ] On a device with a coarse pointer, `/games/asteroids/play` shows `THIS GAME NEEDS A KEYBOARD`, and the canvas is still rendered.
-- [ ] No text in the game screen is in Spanish. `NIVEL`, `PUNTAJE`, and `ESPACIO` do not appear in `components/asteroids-game.tsx`, `lib/asteroids/`, or the player.
-- [ ] `/about`, the Hall of Fame, and the catalog cards show no change in this spec, except the ASTEROIDS card from step 1.
-- [ ] `CLAUDE.md` Architecture has one new paragraph about the asteroids engine, and the `AGENTS.md` block is unchanged.
+- [x] `npm run build` exits 0.
+- [x] `npm run lint` exits 0.
+- [x] `npx tsc --noEmit` exits 0.
+- [x] `lib/asteroids/engine.ts` and `lib/asteroids/types.ts` contain no import from `react` or `next`, and no use of `window`, `document`, or `localStorage`, checked by `grep`.
+- [x] `/games/asteroids/play` loads with no console errors and no React hydration warning in the dev server.
+- [x] On `/games/asteroids/play`, the canvas is visible and the ship is drawn at the center of the field at start.
+- [x] Left and Right arrows rotate the ship, and Up thrusts it. Pressing and holding Space fires bullets at the rate of one shot per 0.2 seconds.
+- [x] A ship that moves past one edge of the field appears at the opposite edge, in both axes.
+- [x] Destroying a large asteroid adds 20 points, a medium one adds 50, and a small one adds 100. The HUD score updates to match.
+- [x] A large asteroid splits into two medium asteroids, and a medium one splits into two small ones. Small asteroids do not split.
+- [x] Clearing all asteroids starts the next level. The HUD level increases by one, and the number of asteroids is 3 plus the new level number.
+- [x] Colliding with an asteroid while not invincible removes one life. The ship respawns at the center with 3 seconds of invincibility, shown as blinking.
+- [x] With 0 lives left, the game-over modal opens with the real score.
+- [x] Destroying 5 asteroids in a row without a power-up drop produces a power-up. Only one power-up is on the field per level.
+- [x] Collecting a power-up turns on triple shot for 5 seconds, shown in the HUD as `3x` with a countdown.
+- [x] PAUSE, the `P` key, and the `Escape` key each pause the game, and each resumes it. While paused, the ship, asteroids, and timers do not change.
+- [x] END opens the game-over modal with the current score.
+- [x] As a guest, SAVE SCORE on `asteroids` writes one entry to `localStorage.av_scores` with `game: "asteroids"`, the real score, and the name typed, and shows `SCORE SAVED`.
+- [x] PLAY AGAIN starts a new game with score 0, 3 lives, and level 1.
+- [x] Every other game, for example `/games/fall/play`, still shows the fake ticker and works as in SPEC 01.
+- [x] On a device with a coarse pointer, `/games/asteroids/play` shows `THIS GAME NEEDS A KEYBOARD`, and the canvas is still rendered.
+- [x] No text in the game screen is in Spanish. `NIVEL`, `PUNTAJE`, and `ESPACIO` do not appear in `components/asteroids-game.tsx`, `lib/asteroids/`, or the player.
+- [x] `/about`, the Hall of Fame, and the catalog cards show no change in this spec, except the ASTEROIDS card from step 1.
+- [x] `CLAUDE.md` Architecture has one new paragraph about the asteroids engine, and the `AGENTS.md` block is unchanged.
 
 ## Decisions
 
