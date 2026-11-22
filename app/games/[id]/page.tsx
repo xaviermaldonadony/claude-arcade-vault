@@ -8,8 +8,11 @@ export function generateStaticParams() {
   return GAMES.map((g) => ({ id: g.id }));
 }
 
-// Blocking lookup: notFound() runs before streaming starts, so unknown ids return a real 404
-// (streaming.md, Status codes). The game is resolved here, then rendered inside <Suspense>.
+// Blocking route: params are read outside <Suspense>, so the page must not stream its shell first.
+// notFound() then runs before streaming starts and unknown ids return a real 404 (same as the play page).
+export const instant = false;
+
+// The game is resolved here, then rendered inside <Suspense>.
 export default async function GameDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const game = GAMES.find((g) => g.id === id);

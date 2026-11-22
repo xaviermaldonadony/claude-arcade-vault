@@ -93,17 +93,39 @@ export function AsteroidsGame({ paused, onStats, onEnd, onTogglePause }: Props) 
     };
   }, []);
 
+  // Fills the parent (the CRT screen arena). The canvas keeps its 4:3 ratio inside it.
   return (
-    <div>
+    <div style={{ position: 'absolute', inset: 0 }}>
       <canvas
         ref={canvasRef}
         width={W}
         height={H}
         aria-label="Asteroids game field"
-        style={{ display: 'block', width: '100%', maxWidth: W, height: 'auto', background: '#000' }}
+        style={{
+          display: 'block',
+          width: '100%',
+          height: '100%',
+          objectFit: 'contain',
+          background: '#000',
+        }}
       />
       {needsKeyboard && (
-        <p style={{ marginTop: 12, letterSpacing: '0.1em' }}>THIS GAME NEEDS A KEYBOARD</p>
+        <p
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: 12,
+            margin: 0,
+            textAlign: 'center',
+            fontFamily: 'var(--mono)',
+            fontSize: 11,
+            letterSpacing: '0.16em',
+            color: 'var(--ink-dim)',
+          }}
+        >
+          THIS GAME NEEDS A KEYBOARD
+        </p>
       )}
     </div>
   );
