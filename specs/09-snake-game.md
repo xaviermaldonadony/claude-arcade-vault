@@ -134,27 +134,27 @@ Every step leaves `npm run dev` running with every route rendering. Step 1 chang
 - [x] `lib/snake/types.ts`, `lib/snake/constants.ts`, and `lib/snake/engine.ts` contain no import from `react` or `next`, and no use of `window`, `document`, or `localStorage`, checked by `grep`.
 - [x] `public/snake/fruits.png` exists, and it is the same file as `references/source-assets/fruits.png`.
 - [x] `execute_sql` on `public.games` shows `title = 'SNAKE'` for id `snake`, and `cat`, `cover`, and `color` are unchanged (`ARCADE`, `cover-snake`, `green`).
-- [ ] `/games` lists the catalog card as SNAKE, and `/games/snake` opens.
-- [ ] `/games/serpentine` returns `404`, and `select count(*) from public.scores where game_id = 'serpentine'` returns `0`.
-- [ ] The mock activity line in `lib/data.ts` reads `game: "Snake"`, and no line in `lib/data.ts` reads "Serpentine".
+- [x] `/games` lists the catalog card as SNAKE, and `/games/snake` opens.
+- [x] `/games/serpentine` returns `404`, and `select count(*) from public.scores where game_id = 'serpentine'` returns `0`.
+- [x] The mock activity line in `lib/data.ts` reads `game: "Snake"`, and no line in `lib/data.ts` reads "Serpentine".
 - [x] `/games/snake/play` loads with no console errors and no React hydration warning in the dev server.
 - [x] At start the snake has 3 segments in the middle row, facing right, and one fruit is on the field.
 - [x] The fruit sprite on the field is one of the 22 atlas sprites, and no fruit is drawn as a broken image.
-- [ ] Arrow keys and W, A, S, D steer the snake. Pressing the reverse of the current direction does nothing.
-- [ ] A snake that leaves one edge appears at the opposite edge, on both axes.
-- [ ] Eating a fruit adds 10 points, adds one segment, and the HUD score and Length update to match.
-- [ ] After each bite the step time drops by 0.004 seconds, and it never goes below 0.06 seconds.
-- [ ] A fruit never appears on a cell of the snake's body.
-- [ ] Biting the body ends the game, opens the game-over modal, and shows the real score.
-- [ ] PAUSE, the `P` key, and the `Escape` key each pause the game, and each resumes it. While paused, the snake and fruit do not change.
+- [x] Arrow keys and W, A, S, D steer the snake. Pressing the reverse of the current direction does nothing.
+- [x] A snake that leaves one edge appears at the opposite edge, on both axes.
+- [x] Eating a fruit adds 10 points, adds one segment, and the HUD score and Length update to match.
+- [x] After each bite the step time drops by 0.004 seconds, and it never goes below 0.06 seconds.
+- [x] A fruit never appears on a cell of the snake's body.
+- [x] Biting the body ends the game, opens the game-over modal, and shows the real score.
+- [x] PAUSE, the `P` key, and the `Escape` key each pause the game, and each resumes it. While paused, the snake and fruit do not change.
 - [x] END opens the game-over modal with the current score.
 - [x] SAVE SCORE on `snake` sends `POST /api/scores` and gets `201`, and the modal shows `SCORE SAVED`.
 - [x] The row for `snake` appears in the Hall of Fame tab SNAKE after a saved score.
 - [x] `plays` for `snake` in `public.games` increases by 1 after a saved score.
-- [ ] With the network blocked, SAVE SCORE shows `COULD NOT SAVE. TRY AGAIN` and keeps the name and score.
-- [ ] PLAY AGAIN starts a new game with score 0, 3 segments, and the start speed.
-- [ ] On a device with a coarse pointer, `/games/snake/play` shows `THIS GAME NEEDS A KEYBOARD`, and the canvas is still rendered.
-- [ ] `/games/fall/play` still shows the fake ticker, `NOT RANKED YET`, and no SAVE button.
+- [x] With the network blocked, SAVE SCORE shows `COULD NOT SAVE. TRY AGAIN` and keeps the name and score.
+- [x] PLAY AGAIN starts a new game with score 0, 3 segments, and the start speed.
+- [x] On a device with a coarse pointer, `/games/snake/play` shows `THIS GAME NEEDS A KEYBOARD`, and the canvas is still rendered.
+- [x] `/games/fall/play` still shows the fake ticker, `NOT RANKED YET`, and no SAVE button.
 - [x] No text in the game screen is in Spanish. `NIVEL`, `PUNTAJE`, `PAUSA`, and `ESPACIO` do not appear in `components/snake-game.tsx`, `lib/snake/`, or `lib/games-registry.ts`.
 - [x] `CLAUDE.md` Architecture has one new paragraph about the snake engine, and the `AGENTS.md` block is unchanged.
 - [x] SPEC 01 to 08 are unchanged in git (`git diff --stat specs/0[1-8]*` is empty).
