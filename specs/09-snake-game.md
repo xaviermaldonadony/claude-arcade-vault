@@ -1,6 +1,6 @@
 # SPEC 09 — Snake game on the SNAKE player route
 
-> **Status:** Approved
+> **Status:** Implemented
 > **Depends on:** SPEC 01, SPEC 05, SPEC 06, SPEC 07
 > **Date:** 2026-11-22
 > **Objective:** Make `/games/snake/play` run a playable Snake game, built from the fruit sprite sheet in `references/source-assets/`, that submits its real score through `POST /api/scores`, while every other game keeps its fake ticker.
