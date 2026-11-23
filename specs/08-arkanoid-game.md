@@ -1,6 +1,6 @@
 # SPEC 08 — Arkanoid game on the ARKANOID player route
 
-> **Status:** Approved
+> **Status:** Implemented
 > **Depends on:** SPEC 01, SPEC 05, SPEC 06, SPEC 07
 > **Date:** 2026-11-22
 > **Objective:** Make `/games/arkanoid/play` run a playable Arkanoid game, ported from `references/started-games/04-arkanoid/` to TypeScript, that submits its real score to the leaderboard through `POST /api/scores`, while every other game keeps its fake ticker.
