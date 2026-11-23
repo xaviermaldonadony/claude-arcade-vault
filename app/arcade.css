@@ -822,6 +822,45 @@ a {
   image-rendering: pixelated;
 }
 
+.cover-arkanoid {
+  background: #0a0a18;
+}
+.cover-arkanoid::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(0deg, rgba(186, 104, 200, 0.1) 0 1px, transparent 1px 24px),
+    repeating-linear-gradient(90deg, rgba(186, 104, 200, 0.1) 0 1px, transparent 1px 24px);
+}
+/* Brick wall in the top 60% of the art box (3 rows x 5 columns), ball in the lower band. */
+.cover-arkanoid::after {
+  content: '';
+  position: absolute;
+  inset: 14% 18% 0 18%;
+  background:
+    radial-gradient(circle closest-side, #fff 0 40%, #ffd54f 50% 70%, transparent 72%) 50% 83.33% /
+      10% 10%,
+    linear-gradient(#4dd0e1, #4dd0e1) 0% 0% / 20% 20%,
+    linear-gradient(#ffd54f, #ffd54f) 25% 0% / 20% 20%,
+    linear-gradient(#ba68c8, #ba68c8) 50% 0% / 20% 20%,
+    linear-gradient(#81c784, #81c784) 75% 0% / 20% 20%,
+    linear-gradient(#f06292, #f06292) 100% 0% / 20% 20%,
+    linear-gradient(#ffd54f, #ffd54f) 0% 25% / 20% 20%,
+    linear-gradient(#ba68c8, #ba68c8) 25% 25% / 20% 20%,
+    linear-gradient(#81c784, #81c784) 50% 25% / 20% 20%,
+    linear-gradient(#f06292, #f06292) 75% 25% / 20% 20%,
+    linear-gradient(#4dd0e1, #4dd0e1) 100% 25% / 20% 20%,
+    linear-gradient(#ba68c8, #ba68c8) 0% 50% / 20% 20%,
+    linear-gradient(#81c784, #81c784) 25% 50% / 20% 20%,
+    linear-gradient(#f06292, #f06292) 50% 50% / 20% 20%,
+    linear-gradient(#4dd0e1, #4dd0e1) 75% 50% / 20% 20%,
+    linear-gradient(#ffd54f, #ffd54f) 100% 50% / 20% 20%;
+  background-repeat: no-repeat;
+  filter: drop-shadow(0 0 8px rgba(186, 104, 200, 0.45));
+  image-rendering: pixelated;
+}
+
 /* ===== detail screen ===== */
 .av-detail {
   display: grid;

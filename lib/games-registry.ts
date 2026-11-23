@@ -2,6 +2,7 @@
 // Adding a real game means one entry below (SPEC 07).
 
 import type { ComponentType } from 'react';
+import { ArkanoidGame } from '@/components/arkanoid-game';
 import { AsteroidsGame } from '@/components/asteroids-game';
 import { TetrisGame } from '@/components/tetris-game';
 
@@ -44,6 +45,14 @@ const REAL_GAMES: Record<string, RealGameEntry> = {
       score: s.score,
       level: s.level,
       slot: { label: 'Lines', value: s.lines ?? 0, hearts: false },
+    }),
+  },
+  arkanoid: {
+    component: ArkanoidGame,
+    mapStats: (s) => ({
+      score: s.score,
+      level: s.level,
+      slot: { label: 'Lives', value: s.lives ?? 0, hearts: true },
     }),
   },
 };
