@@ -41,7 +41,7 @@ export const ACTIVITY: ActivityRow[] = [
   { player: "Z3R0COOL", game: "Invaders", score: 54190, ago: "8 min ago", tone: "green" },
   { player: "VAULT_07", game: "Asteroids", score: 41200, ago: "12 min ago", tone: "cyan" },
   { player: "GLITCHA", game: "Block Buster", score: 28450, ago: "18 min ago", tone: "cyan" },
-  { player: "ARKADYA", game: "Serpentine", score: 7820, ago: "24 min ago", tone: "green" },
+  { player: "ARKADYA", game: "Snake", score: 7820, ago: "24 min ago", tone: "green" },
   { player: "CYBER_LU", game: "Frogrun", score: 18900, ago: "31 min ago", tone: "yellow" },
 ];
 
