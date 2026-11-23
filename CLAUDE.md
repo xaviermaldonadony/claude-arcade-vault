@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Arcade Vault is an online gaming platform where players compete for the highest score (see README.md). It is a working Next.js app: Home, Games library, Game detail, Play, Hall of Fame, About, and Auth pages, a Supabase-backed game catalog and leaderboard, and four playable canvas games (Asteroids, Tetris, Arkanoid, Snake). The other six catalog games are placeholders that run a fake score ticker. `demos/demo.tsx` is a throwaway scratch file, not product code.
+Arcade Vault is an online gaming platform where players compete for the highest score (see README.md). It is a working Next.js app: Home, Games library, Game detail, Play, Hall of Fame, About, and Auth pages, a Supabase-backed game catalog and leaderboard, and four playable canvas games (Asteroids, Tetris, Arkanoid, Snake). The other six catalog games are placeholders that run a fake score ticker. The implemented games are listed in `references/implemented-games.md`. `demos/demo.tsx` is a throwaway scratch file, not product code.
 
 ## Commands
 
