@@ -4,10 +4,17 @@
 import type { ComponentType } from 'react';
 import { ArkanoidGame } from '@/components/arkanoid-game';
 import { AsteroidsGame } from '@/components/asteroids-game';
+import { SnakeGame } from '@/components/snake-game';
 import { TetrisGame } from '@/components/tetris-game';
 
 // What a real game reports. Each game sends the fields it has.
-export type GameStats = { score: number; level: number; lives?: number; lines?: number };
+export type GameStats = {
+  score: number;
+  level: number;
+  lives?: number;
+  lines?: number;
+  length?: number;
+};
 
 // One HUD slot after the score and before the level. Asteroids shows lives as hearts.
 // Tetris shows lines as a number.
@@ -53,6 +60,14 @@ const REAL_GAMES: Record<string, RealGameEntry> = {
       score: s.score,
       level: s.level,
       slot: { label: 'Lives', value: s.lives ?? 0, hearts: true },
+    }),
+  },
+  snake: {
+    component: SnakeGame,
+    mapStats: (s) => ({
+      score: s.score,
+      level: s.level,
+      slot: { label: 'Length', value: s.length ?? 0, hearts: false },
     }),
   },
 };
