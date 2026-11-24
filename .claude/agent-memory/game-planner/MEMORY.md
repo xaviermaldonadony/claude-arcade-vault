@@ -1,0 +1,22 @@
+- [INVADERS suggestion](suggested-invaders.md) — top pick 2026-11-23, SHOOTER green, placeholder slot, status Suggested
+- [GLUTTON suggestion](suggested-glutton.md) — runner-up 2026-11-23, ARCADE yellow, Pac-Man style, status Suggested
+- [FROGRUN suggestion](suggested-frogrun.md) — runner-up 2026-11-23, ARCADE green collides with snake, status Suggested
+- [SKYHOP](suggested-skyhop.md) — batch 2026-11-23, ARCADE yellow, endless platformer, Suggested
+- [GEM DIGGER](suggested-gem-digger.md) — batch 2026-11-23, ARCADE magenta, name collision flag with gem-swap
+- [LADDER LEAP](suggested-ladder-leap.md) — batch 2026-11-23, ARCADE cyan, Donkey Kong style, Suggested
+- [BOMB BLOCKS](suggested-bomb-blocks.md) — batch 2026-11-23, ARCADE green, Bomberman style, Suggested
+- [BURGER STACK](suggested-burger-stack.md) — batch 2026-11-23, ARCADE yellow, BurgerTime style, Suggested
+- [LASER DODGE](suggested-laser-dodge.md) — batch 2026-11-23, ARCADE cyan, effort S, Suggested
+- [BEAM TOWERS](suggested-beam-towers.md) — batch 2026-11-23, ARCADE magenta, tower defense, Suggested
+- [TWIN BLASTER](suggested-twin-blaster.md) — batch 2026-11-23, SHOOTER cyan, name collision flag with blaster-run
+- [LUNAR DROP](suggested-lunar-drop.md) — batch 2026-11-23, ARCADE yellow, lander style, Suggested
+- [STARFALL](suggested-starfall-shmup.md) — batch 2026-11-23, SHOOTER magenta, vertical shmup, Suggested
+- [GEM SWAP](suggested-gem-swap.md) — batch 2026-11-23, PUZZLE green, match-3, name collision flag with gem-digger
+- [SLIDE MERGE](suggested-slide-merge.md) — batch 2026-11-23, PUZZLE yellow, 2048 style, Suggested
+- [FLOOD](suggested-flood-fill.md) — batch 2026-11-23, PUZZLE cyan, region recolor, Suggested
+- [SIMON GRID](suggested-simon-grid.md) — batch 2026-11-23, PUZZLE magenta, sequence memory, Suggested
+- [MINEFIELD](suggested-minefield.md) — batch 2026-11-23, PUZZLE yellow, minesweeper style, Suggested
+- [NEON DRIFT](suggested-neon-drift.md) — batch 2026-11-23, SHOOTER magenta, racing shooter, Suggested
+- [BLASTER RUN](suggested-blaster-run.md) — batch 2026-11-23, SHOOTER cyan, runner, name collision flag with twin-blaster
+- [BEAT DROP](suggested-beat-drop.md) — batch 2026-11-23, PUZZLE yellow, rhythm lanes, Suggested
+- [REFLEX](suggested-reflex.md) — batch 2026-11-23, PUZZLE green, reaction test, overlaps simon-grid
