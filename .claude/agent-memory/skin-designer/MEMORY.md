@@ -1,1 +1,3 @@
 - [Asteroids skin audit](asteroids-skin-audit.md) — classic, neo, retro added in lib/asteroids/skins.ts; SKIN select under asteroids-skin
+- [Snake skin audit](snake-skin-audit.md) — classic, neo, retro added in lib/snake/skins.ts; SKIN select under snake-skin
+- [Arkanoid skin audit](arkanoid-skin-audit.md) — classic, neo, retro added in lib/arkanoid/skins.ts; SKIN select under arkanoid-skin
