@@ -1,0 +1,1 @@
+- [Asteroids skin audit](asteroids-skin-audit.md) — classic, neo, retro added in lib/asteroids/skins.ts; SKIN select under asteroids-skin
