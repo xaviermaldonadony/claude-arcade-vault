@@ -29,6 +29,15 @@ Project skills live in `.claude/skills/` and are pinned in `skills-lock.json`:
 - `/spec` and `/spec-impl` (from `Klerith/fernando-skills`): write a spec, then implement from it. See the spec-driven workflow below.
 - `/arcade-game-spec` (project-local, manual invocation only): specs a new playable game with a Supabase leaderboard from a `references/started-games/NN-name` folder or a game idea. It runs the `/spec` flow with game context preloaded and writes the spec only. Implement with `/spec-impl`.
 
+## Agents
+
+Project subagents live in `.claude/agents/`:
+
+- `game-planner` (`.claude/agents/game-planner.md`): proposes the next game to add (one pick plus runners-up). Use it when asked what game to add next.
+  - Tracks games in `references/game-suggestions-todo.md` (Suggested, Accepted, Implemented, Discarded). Never re-suggests a listed game.
+  - Memory: `.claude/agent-memory/game-planner/`.
+  - Edits only the todo file and its memory. Specs go through `/arcade-game-spec`, then `/spec-impl`.
+
 ## Tooling and hooks
 
 - **Format hook:** `.claude/settings.json` registers a `PostToolUse` hook on `Edit|MultiEdit|Write` that runs `scripts/format-hook.sh`. It runs Prettier on every file Prettier can parse, strips trailing whitespace on other non-Markdown files, then runs `eslint --fix` on JS/TS files. Lint errors come back to Claude with exit code 2. Do not hand-format files to fight it.
