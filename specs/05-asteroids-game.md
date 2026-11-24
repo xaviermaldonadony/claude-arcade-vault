@@ -24,6 +24,11 @@ SPEC 01 built the Player screen as a visual shell with a fake score ticker. The 
 - SAVE SCORE for this game writes the real score to `av_scores`, in the shape SPEC 01 defines.
 - English text for all in-game labels.
 - The canvas rendering in a client component, with the game logic in pure TypeScript modules that have no DOM access.
+- Three skins for the game: `classic`, `neo`, and `retro`. A SKIN select in the game's control area picks one. The choice is saved in `localStorage` under `asteroids-skin`. Default is `classic`.
+  - `classic`: the original look, black field, white outlines, cyan power-up, orange flame.
+  - `neo`: dark navy field, cyan asteroids, magenta ship, yellow shots and flame, green power-up, outline glow.
+  - `retro`: near-black field, amber asteroids and shots, phosphor green ship and power-up, rust flame, no glow, square bullets.
+  - Skin palettes live in `lib/asteroids/skins.ts`. The renderer takes the skin id. The engine does not know about skins.
 
 **Out of scope (for future specs):**
 
@@ -113,7 +118,15 @@ Saved score, written by SAVE SCORE to `localStorage` key `av_scores` (unchanged 
 { "game": "asteroids", "score": 1240, "name": "KAI", "at": 1763712000000 }
 ```
 
-No new `localStorage` keys. No new cookies.
+Skin preference, read and written by the canvas component only:
+
+```ts
+// lib/asteroids/skins.ts
+export const SKIN_IDS = ['classic', 'neo', 'retro'] as const;
+export type SkinId = (typeof SKIN_IDS)[number];
+```
+
+`localStorage` key `asteroids-skin` holds one of the three ids. A missing or unknown value falls back to `classic`. This is the only new `localStorage` key. No new cookies.
 
 ## Implementation plan
 
@@ -126,6 +139,8 @@ No new `localStorage` keys. No new cookies.
 7. **Wire into the player.** In `components/game-player.tsx`, when the game id is `asteroids`, render `AsteroidsGame` in the arena instead of the fake ticker and fake arena. The HUD score, the lives, and the level come from the real game through the callbacks. PAUSE and RESUME control the game through the `paused` prop, and `P` and `Escape` toggle the same state. END opens the existing game-over modal with the real score. The other game ids keep the current code path with no change. Before editing the player, read the relevant guides in `node_modules/next/dist/docs/` as `AGENTS.md` requires, and use the `/frontend-design` skill for the HUD and overlay styling, as `CLAUDE.md` requires for UI.
 8. **Save and restart.** SAVE SCORE for `asteroids` writes `{ game: "asteroids", score, name, at }` to `av_scores`, using the real score and the same name rules as SPEC 01. PLAY AGAIN resets the engine with `createGame()`. The game-over modal and its buttons come from SPEC 01 and are not redesigned.
 9. **Touch note and docs.** Show the keyboard note from step 6 on coarse pointers. Add one short paragraph to `CLAUDE.md` Architecture: the `lib/asteroids/` modules, the client canvas component, and that only the `asteroids` game runs the real engine. Do not touch the `AGENTS.md` block. Do not edit SPEC 01 or SPEC 02.
+
+10. **Skins.** Create `lib/asteroids/skins.ts` with `SKIN_IDS`, `SkinId`, `isSkinId`, a typed palette per skin, and the `SKINS` map. Change `lib/asteroids/render.ts` to `drawGame(ctx, state, now, skinId)` and take every color and the canvas background from the skin palette, with no engine change. In `components/asteroids-game.tsx`, add a SKIN select (label `SKIN`, id `asteroids-skin`) with the three options, read and write `localStorage` key `asteroids-skin` through `useSyncExternalStore` with a `classic` server snapshot, and blur the select after a change so keys keep going to the game. Layout mirrors `components/tetris-game.tsx`. Verify with `npx tsc --noEmit` and `npm run lint`, then in the browser per the skin acceptance criteria.
 
 Every step leaves `npm run dev` running with every route rendering. Step 1 changes the URL of one card and nothing else. Steps 2 to 5 add files that nothing imports yet. Step 6 adds the component without a route change. Step 7 is the first step that changes what a user sees inside the player, and only on `/games/asteroids/play`.
 
@@ -155,6 +170,13 @@ Every step leaves `npm run dev` running with every route rendering. Step 1 chang
 - [x] No text in the game screen is in Spanish. `NIVEL`, `PUNTAJE`, and `ESPACIO` do not appear in `components/asteroids-game.tsx`, `lib/asteroids/`, or the player.
 - [x] `/about`, the Hall of Fame, and the catalog cards show no change in this spec, except the ASTEROIDS card from step 1.
 - [x] `CLAUDE.md` Architecture has one new paragraph about the asteroids engine, and the `AGENTS.md` block is unchanged.
+- [x] `npx tsc --noEmit` and `npm run lint` exit 0 with the skin code (checked 2026-11-24).
+- [ ] The SKIN select on `/games/asteroids/play` lists `classic`, `neo`, and `retro`, and each option changes the canvas colors immediately.
+- [ ] `classic` matches the look of the game before skins were added.
+- [ ] The chosen skin is still selected after a page reload, read from `localStorage.asteroids-skin`.
+- [ ] An unknown or missing `asteroids-skin` value shows `classic` with no console error and no React hydration warning.
+- [ ] The skin does not change the game state: score, lives, level, and physics are the same in every skin.
+- [ ] `neo` and `retro` text and HUD stay readable on the dark field, with no text below 4.5:1 contrast on its background.
 
 ## Decisions
 
@@ -176,6 +198,9 @@ Every step leaves `npm run dev` running with every route rendering. Step 1 chang
 - **Yes:** `dt` clamped to 0.05 seconds per frame, as in the reference.
 - **Yes:** `Ship.thrusting` is set from the Up key each frame, so the renderer draws the thruster flame from state alone.
 - **Yes:** One `onStats({ score, lives, level })` callback replaces the score-only callback. The player HUD reads everything from it.
+- **Yes:** Three skins (`classic`, `neo`, `retro`), chosen in the game's own SKIN select. The skin is visual only and never changes the engine.
+- **Yes:** Skin choice saved in `localStorage` under `asteroids-skin`, the same pattern as `tetris-skin`. It is not a score and not `av_scores`.
+- **Yes:** Default skin is `classic`, the look the game already had.
 
 ## Identified risks
 
