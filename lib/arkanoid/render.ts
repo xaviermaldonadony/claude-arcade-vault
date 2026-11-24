@@ -1,6 +1,6 @@
 // Canvas drawing for the arkanoid game. Sprites come from public/arkanoid/spritesheet-breakout.png.
 // Reads state only; does not change it. No React or Next imports.
-// Layout follows references/started-games/04-arkanoid/game.js.
+// Layout follows references/started-games/04-arkanoid/game.js. Skins are in ./skins.ts.
 
 import {
   EXPLOSION_DURATION,
@@ -12,6 +12,7 @@ import {
   W,
   type SpriteRect,
 } from './constants';
+import { SKINS, type SkinId, type SheetTint, type Skin } from './skins';
 import type { ArkanoidState, Rect } from './types';
 
 // Loads the sprite sheet. Resolves only when the image is ready to draw.
@@ -24,43 +25,96 @@ export function loadSprites(src: string): Promise<HTMLImageElement> {
   });
 }
 
-function drawSprite(
-  ctx: CanvasRenderingContext2D,
-  sheet: HTMLImageElement,
-  s: SpriteRect,
-  r: Rect,
-): void {
-  ctx.drawImage(sheet, s.sx, s.sy, s.sw, s.sh, r.x, r.y, r.w, r.h);
+// Tinted copies of the sheet, built once per sheet and tint. Keyed by the image, so a reload gets new copies.
+const tintedSheets = new WeakMap<HTMLImageElement, Partial<Record<SheetTint, HTMLCanvasElement>>>();
+
+// Retro tint: pull the colors 60% toward gray, then warm them with a cream multiply.
+// Each step is clipped back to the sprite alpha, so the transparent areas stay empty.
+function buildRetroSheet(sheet: HTMLImageElement): HTMLCanvasElement {
+  const canvas = document.createElement('canvas');
+  canvas.width = sheet.naturalWidth;
+  canvas.height = sheet.naturalHeight;
+  const t = canvas.getContext('2d');
+  if (!t) return canvas;
+  t.drawImage(sheet, 0, 0);
+  t.globalCompositeOperation = 'saturation';
+  t.globalAlpha = 0.6;
+  t.fillStyle = '#808080';
+  t.fillRect(0, 0, canvas.width, canvas.height);
+  t.globalCompositeOperation = 'multiply';
+  t.globalAlpha = 1;
+  t.fillStyle = '#f0dcb4';
+  t.fillRect(0, 0, canvas.width, canvas.height);
+  t.globalCompositeOperation = 'destination-in';
+  t.drawImage(sheet, 0, 0);
+  return canvas;
 }
 
-function drawOverlay(ctx: CanvasRenderingContext2D, message: string): void {
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+function sheetFor(sheet: HTMLImageElement, tint: SheetTint): CanvasImageSource {
+  if (tint === 'none') return sheet;
+  let byTint = tintedSheets.get(sheet);
+  if (!byTint) {
+    byTint = {};
+    tintedSheets.set(sheet, byTint);
+  }
+  let canvas = byTint[tint];
+  if (!canvas) {
+    canvas = buildRetroSheet(sheet);
+    byTint[tint] = canvas;
+  }
+  return canvas;
+}
+
+// Glow is a shadow in the given color. glow 0 draws flat.
+function drawSprite(
+  ctx: CanvasRenderingContext2D,
+  source: CanvasImageSource,
+  s: SpriteRect,
+  r: Rect,
+  glow = 0,
+  glowColor = '#000',
+): void {
+  if (glow > 0) {
+    ctx.save();
+    ctx.shadowBlur = glow;
+    ctx.shadowColor = glowColor;
+    ctx.drawImage(source, s.sx, s.sy, s.sw, s.sh, r.x, r.y, r.w, r.h);
+    ctx.restore();
+    return;
+  }
+  ctx.drawImage(source, s.sx, s.sy, s.sw, s.sh, r.x, r.y, r.w, r.h);
+}
+
+function drawOverlay(ctx: CanvasRenderingContext2D, skin: Skin, message: string): void {
+  ctx.fillStyle = skin.scrimGameOver;
   ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = '#fff';
+  ctx.fillStyle = skin.overlayTitle;
   ctx.font = 'bold 64px monospace';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(message, W / 2, H / 2);
 }
 
-function drawPauseOverlay(ctx: CanvasRenderingContext2D): void {
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+function drawPauseOverlay(ctx: CanvasRenderingContext2D, skin: Skin): void {
+  ctx.fillStyle = skin.scrimPause;
   ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = '#fff';
+  ctx.fillStyle = skin.overlayTitle;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.font = 'bold 56px monospace';
   ctx.fillText('PAUSED', W / 2, H / 2 - 20);
+  ctx.fillStyle = skin.hudDim;
   ctx.font = 'bold 16px monospace';
   ctx.fillText('Press P or Esc to resume', W / 2, H / 2 + 30);
 }
 
 function drawHud(
   ctx: CanvasRenderingContext2D,
-  sheet: HTMLImageElement,
+  source: CanvasImageSource,
+  skin: Skin,
   state: ArkanoidState,
 ): void {
-  ctx.fillStyle = '#fff';
+  ctx.fillStyle = skin.hud;
   ctx.font = 'bold 18px monospace';
   ctx.textBaseline = 'top';
   ctx.textAlign = 'left';
@@ -73,7 +127,7 @@ function drawHud(
   const spacing = 4;
   for (let i = 0; i < state.lives; i++) {
     const x = W - 10 - (state.lives - i) * (size + spacing);
-    drawSprite(ctx, sheet, SPRITE_BALL, { x, y: 10, w: size, h: size });
+    drawSprite(ctx, source, SPRITE_BALL, { x, y: 10, w: size, h: size });
   }
 }
 
@@ -82,12 +136,24 @@ export function drawGame(
   ctx: CanvasRenderingContext2D,
   sheet: HTMLImageElement,
   state: ArkanoidState,
+  skinId: SkinId = 'classic',
 ): void {
-  ctx.fillStyle = '#000';
+  const skin = SKINS[skinId];
+  const source = sheetFor(sheet, skin.sheetTint);
+
+  ctx.fillStyle = skin.canvasBg;
   ctx.fillRect(0, 0, W, H);
 
   for (const brick of state.bricks) {
-    if (brick.alive) drawSprite(ctx, sheet, SPRITE_BLOCK[brick.color], brick);
+    if (brick.alive)
+      drawSprite(
+        ctx,
+        source,
+        SPRITE_BLOCK[brick.color],
+        brick,
+        skin.glow,
+        skin.brickGlow[brick.color],
+      );
   }
 
   for (const e of state.explosions) {
@@ -96,14 +162,14 @@ export function drawGame(
       Math.floor((e.elapsed / EXPLOSION_DURATION) * frames.length),
       frames.length - 1,
     );
-    drawSprite(ctx, sheet, frames[index], e);
+    drawSprite(ctx, source, frames[index], e);
   }
 
-  drawSprite(ctx, sheet, SPRITE_PADDLE, state.paddle);
-  drawSprite(ctx, sheet, SPRITE_BALL, state.ball);
+  drawSprite(ctx, source, SPRITE_PADDLE, state.paddle, skin.glow, skin.paddleGlow);
+  drawSprite(ctx, source, SPRITE_BALL, state.ball, skin.glow, skin.ballGlow);
 
-  if (state.status === 'playing' || state.status === 'paused') drawHud(ctx, sheet, state);
-  if (state.status === 'gameover') drawOverlay(ctx, 'GAME OVER');
-  if (state.status === 'won') drawOverlay(ctx, 'YOU CLEARED ALL LEVELS!');
-  if (state.status === 'paused') drawPauseOverlay(ctx);
+  if (state.status === 'playing' || state.status === 'paused') drawHud(ctx, source, skin, state);
+  if (state.status === 'gameover') drawOverlay(ctx, skin, 'GAME OVER');
+  if (state.status === 'won') drawOverlay(ctx, skin, 'YOU CLEARED ALL LEVELS!');
+  if (state.status === 'paused') drawPauseOverlay(ctx, skin);
 }

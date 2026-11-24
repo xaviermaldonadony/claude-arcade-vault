@@ -1,15 +1,17 @@
 'use client';
 
-import { useEffect, useRef, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useSyncExternalStore, type ChangeEvent } from 'react';
 import { H, W } from '@/lib/arkanoid/constants';
 import { createGame, setPaused, step } from '@/lib/arkanoid/engine';
 import { attachKeyboard } from '@/lib/arkanoid/input';
 import { drawGame, loadSprites } from '@/lib/arkanoid/render';
+import { SKIN_IDS, SKINS, isSkinId, type SkinId } from '@/lib/arkanoid/skins';
 import type { ArkanoidState } from '@/lib/arkanoid/types';
 
 const SPRITE_SHEET_SRC = '/arkanoid/spritesheet-breakout.png';
 const REBOUND_SRC = '/arkanoid/sounds/rebound.mp3';
 const DESTROY_SRC = '/arkanoid/sounds/destroy.mp3';
+const SKIN_KEY = 'arkanoid-skin';
 
 const COARSE_QUERY = '(pointer: coarse)';
 
@@ -22,6 +24,49 @@ function subscribeCoarse(onChange: () => void): () => void {
 const readCoarse = (): boolean => window.matchMedia(COARSE_QUERY).matches;
 // Server render assumes a fine pointer, so hydration matches and the note appears only on the client.
 const serverCoarse = (): boolean => false;
+
+// Storage can be blocked (private mode, disabled cookies). Then the skin simply does not persist.
+function readStoredSkin(): SkinId | null {
+  try {
+    const value = localStorage.getItem(SKIN_KEY);
+    return isSkinId(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredSkin(skin: SkinId): void {
+  try {
+    localStorage.setItem(SKIN_KEY, skin);
+  } catch {
+    // Not saved. The skin still applies for this visit.
+  }
+}
+
+// Skin preference as an external store, so the select and the frame loop read the same value.
+// The cache holds the choice even when storage is blocked. Server render always uses Classic.
+const skinListeners = new Set<() => void>();
+let skinCache: SkinId | null = null;
+
+function subscribeSkin(onChange: () => void): () => void {
+  skinListeners.add(onChange);
+  return () => {
+    skinListeners.delete(onChange);
+  };
+}
+
+function readSkin(): SkinId {
+  if (skinCache === null) skinCache = readStoredSkin() ?? 'classic';
+  return skinCache;
+}
+
+const serverSkin = (): SkinId => 'classic';
+
+function saveSkin(skin: SkinId): void {
+  skinCache = skin;
+  writeStoredSkin(skin);
+  skinListeners.forEach((notify) => notify());
+}
 
 type Props = {
   // Controlled by the player. true pauses the engine, false resumes it.
@@ -46,17 +91,22 @@ export function ArkanoidGame({ paused, onStats, onEnd, onTogglePause }: Props) {
   // Coarse pointer means a touch device. Touch controls are out of scope.
   const needsKeyboard = useSyncExternalStore(subscribeCoarse, readCoarse, serverCoarse);
 
+  // Classic on the server. The saved skin is read on the client.
+  const skin = useSyncExternalStore(subscribeSkin, readSkin, serverSkin);
+
   // Latest props, read by the frame loop without restarting it.
   const pausedRef = useRef(paused);
   const onStatsRef = useRef(onStats);
   const onEndRef = useRef(onEnd);
   const onTogglePauseRef = useRef(onTogglePause);
+  const skinRef = useRef(skin);
   useEffect(() => {
     pausedRef.current = paused;
     onStatsRef.current = onStats;
     onEndRef.current = onEnd;
     onTogglePauseRef.current = onTogglePause;
-  }, [paused, onStats, onEnd, onTogglePause]);
+    skinRef.current = skin;
+  }, [paused, onStats, onEnd, onTogglePause, skin]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -111,7 +161,7 @@ export function ArkanoidGame({ paused, onStats, onEnd, onTogglePause }: Props) {
         onEndRef.current(state.score);
       }
 
-      drawGame(ctx, sheet, state);
+      drawGame(ctx, sheet, state, skinRef.current);
       frameId = requestAnimationFrame(frame);
     };
 
@@ -132,9 +182,28 @@ export function ArkanoidGame({ paused, onStats, onEnd, onTogglePause }: Props) {
     };
   }, []);
 
+  function handleSkinChange(e: ChangeEvent<HTMLSelectElement>) {
+    const next = e.target.value;
+    if (!isSkinId(next)) return;
+    saveSkin(next);
+    // Drop focus so Space and the arrow keys keep controlling the game.
+    e.target.blur();
+  }
+
   // Fills the parent (the CRT screen arena). The canvas keeps its 4:3 ratio inside it.
   return (
-    <div style={{ position: 'absolute', inset: 0 }}>
+    <div
+      style={{
+        position: 'absolute',
+        inset: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 12,
+        padding: 12,
+      }}
+    >
       <canvas
         ref={canvasRef}
         width={W}
@@ -142,19 +211,45 @@ export function ArkanoidGame({ paused, onStats, onEnd, onTogglePause }: Props) {
         aria-label="Arkanoid game field"
         style={{
           display: 'block',
-          width: '100%',
-          height: '100%',
-          objectFit: 'contain',
-          background: '#000',
+          flex: '1 1 0',
+          minHeight: 0,
+          height: 0,
+          maxWidth: '100%',
+          aspectRatio: `${W} / ${H}`,
+          background: SKINS[skin].canvasBg,
         }}
       />
+
+      <div
+        className="field"
+        style={{ flexDirection: 'row', alignItems: 'center', gap: 12, margin: 0 }}
+      >
+        <label htmlFor="arkanoid-skin">SKIN</label>
+        <select
+          id="arkanoid-skin"
+          value={skin}
+          onChange={handleSkinChange}
+          style={{
+            height: 32,
+            background: 'var(--bg)',
+            color: 'var(--ink)',
+            border: '1px solid var(--line)',
+            padding: '0 8px',
+            fontFamily: 'var(--mono)',
+            fontSize: 12,
+          }}
+        >
+          {SKIN_IDS.map((id) => (
+            <option key={id} value={id}>
+              {SKINS[id].label}
+            </option>
+          ))}
+        </select>
+      </div>
+
       {needsKeyboard && (
         <p
           style={{
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            bottom: 12,
             margin: 0,
             textAlign: 'center',
             fontFamily: 'var(--mono)',
