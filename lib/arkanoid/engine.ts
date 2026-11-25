@@ -104,8 +104,9 @@ export function step(state: ArkanoidState, input: ArkanoidInput, dt: number): Ar
 
   // Paddle: keys move it, then the mouse position overrides it when present.
   let px = state.paddle.x;
-  if (input.left) px = Math.max(0, px - PADDLE_SPEED * h);
-  if (input.right) px = Math.min(W - state.paddle.w, px + PADDLE_SPEED * h);
+  const speed = input.paddleSpeed ?? PADDLE_SPEED;
+  if (input.left) px = Math.max(0, px - speed * h);
+  if (input.right) px = Math.min(W - state.paddle.w, px + speed * h);
   if (input.pointerX !== null) px = input.pointerX - state.paddle.w / 2;
   const paddle: Rect = { ...state.paddle, x: clamp(px, 0, W - state.paddle.w) };
 

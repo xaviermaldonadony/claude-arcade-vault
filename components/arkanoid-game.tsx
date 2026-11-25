@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useSyncExternalStore, type ChangeEvent } from 'react';
 import type { TouchControls } from '@/lib/touch/controls';
-import { H, W } from '@/lib/arkanoid/constants';
+import { H, TOUCH_PADDLE_SPEED, W } from '@/lib/arkanoid/constants';
 import { createGame, setPaused, step } from '@/lib/arkanoid/engine';
 import { attachKeyboard } from '@/lib/arkanoid/input';
 import { drawGame, loadSprites } from '@/lib/arkanoid/render';
@@ -77,7 +77,7 @@ function playCopy(source: HTMLAudioElement): void {
   copy.play().catch(() => {});
 }
 
-export function ArkanoidGame({ paused, onStats, onEnd, onTogglePause }: Props) {
+export function ArkanoidGame({ paused, onStats, onEnd, onTogglePause, touch }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Classic on the server. The saved skin is read on the client.
@@ -89,6 +89,8 @@ export function ArkanoidGame({ paused, onStats, onEnd, onTogglePause }: Props) {
   const onEndRef = useRef(onEnd);
   const onTogglePauseRef = useRef(onTogglePause);
   const skinRef = useRef(skin);
+  // The touch state never changes identity, so the frame loop reads it through a ref.
+  const touchRef = useRef(touch);
   useEffect(() => {
     pausedRef.current = paused;
     onStatsRef.current = onStats;
@@ -133,7 +135,15 @@ export function ArkanoidGame({ paused, onStats, onEnd, onTogglePause }: Props) {
       if (keyboard.takePausePress()) onTogglePauseRef.current?.();
 
       state = setPaused(state, pausedRef.current);
-      const input = { ...keyboard.read(), pointerX };
+      const k = keyboard.read();
+      const held = touchRef.current.held();
+      const input = {
+        left: k.left || held.has('left'),
+        right: k.right || held.has('right'),
+        pointerX,
+        // The D-pad moves the paddle faster than the keyboard (SPEC 10).
+        paddleSpeed: held.has('left') || held.has('right') ? TOUCH_PADDLE_SPEED : undefined,
+      };
       pointerX = null;
       state = step(state, input, dt);
 

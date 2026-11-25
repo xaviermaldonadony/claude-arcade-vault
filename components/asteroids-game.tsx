@@ -67,7 +67,7 @@ type Props = {
   onTogglePause?: () => void;
 };
 
-export function AsteroidsGame({ paused, onStats, onEnd, onTogglePause }: Props) {
+export function AsteroidsGame({ paused, onStats, onEnd, onTogglePause, touch }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Classic on the server. The saved skin is read on the client.
@@ -79,6 +79,8 @@ export function AsteroidsGame({ paused, onStats, onEnd, onTogglePause }: Props) 
   const onEndRef = useRef(onEnd);
   const onTogglePauseRef = useRef(onTogglePause);
   const skinRef = useRef(skin);
+  // The touch state never changes identity, so the frame loop reads it through a ref.
+  const touchRef = useRef(touch);
   useEffect(() => {
     pausedRef.current = paused;
     onStatsRef.current = onStats;
@@ -108,7 +110,18 @@ export function AsteroidsGame({ paused, onStats, onEnd, onTogglePause }: Props) 
       if (keyboard.takePausePress()) onTogglePauseRef.current?.();
 
       state = setPaused(state, pausedRef.current);
-      state = step(state, keyboard.read(), dt);
+      const k = keyboard.read();
+      const held = touchRef.current.held();
+      state = step(
+        state,
+        {
+          left: k.left || held.has('left'),
+          right: k.right || held.has('right'),
+          thrust: k.thrust || held.has('up'),
+          fire: k.fire || held.has('action'),
+        },
+        dt,
+      );
 
       if (state.score !== lastScore || state.lives !== lastLives || state.level !== lastLevel) {
         lastScore = state.score;

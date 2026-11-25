@@ -32,6 +32,8 @@ export type ArkanoidInput = {
   left: boolean;
   right: boolean;
   pointerX: number | null; // paddle center in canvas coordinates, or null when the mouse is not on the canvas
+  // Paddle speed for left and right, in px/s. Unset uses PADDLE_SPEED. The touch D-pad sets it (SPEC 10).
+  paddleSpeed?: number;
 };
 
 export type LevelBlock = { col: number; row: number; color: BrickColor };

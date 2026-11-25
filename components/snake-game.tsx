@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useSyncExternalStore, type ChangeEvent } from 'react';
 import type { TouchControls } from '@/lib/touch/controls';
+import type { Dir } from '@/lib/snake/types';
 import { FRUIT_SHEET } from '@/lib/snake/atlas';
 import { attachKeyboard } from '@/lib/snake/input';
 import { createGame, level, setPaused, step } from '@/lib/snake/engine';
@@ -68,7 +69,15 @@ type Props = {
   onTogglePause?: () => void;
 };
 
-export function SnakeGame({ paused, onStats, onEnd, onTogglePause }: Props) {
+const TOUCH_TURNS: Dir[] = ['up', 'down', 'left', 'right'];
+
+// First D-pad press since the last frame, as a turn. A keyboard turn wins when both arrive.
+function takeTouchTurn(touch: TouchControls): Dir | null {
+  for (const dir of TOUCH_TURNS) if (touch.takePress(dir)) return dir;
+  return null;
+}
+
+export function SnakeGame({ paused, onStats, onEnd, onTogglePause, touch }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   // Classic on the server. The saved skin is read on the client.
   const skin = useSyncExternalStore(subscribeSkin, readSkin, serverSkin);
@@ -79,6 +88,8 @@ export function SnakeGame({ paused, onStats, onEnd, onTogglePause }: Props) {
   const onEndRef = useRef(onEnd);
   const onTogglePauseRef = useRef(onTogglePause);
   const skinRef = useRef(skin);
+  // The touch state never changes identity, so the frame loop reads it through a ref.
+  const touchRef = useRef(touch);
   useEffect(() => {
     pausedRef.current = paused;
     onStatsRef.current = onStats;
@@ -114,7 +125,7 @@ export function SnakeGame({ paused, onStats, onEnd, onTogglePause }: Props) {
       if (keyboard.takePausePress()) onTogglePauseRef.current?.();
 
       state = setPaused(state, pausedRef.current);
-      state = step(state, { turn: keyboard.takeTurn() }, dt);
+      state = step(state, { turn: keyboard.takeTurn() ?? takeTouchTurn(touchRef.current) }, dt);
 
       const key = `${state.score}|${state.fruits}|${state.status}`;
       if (key !== lastKey) {
