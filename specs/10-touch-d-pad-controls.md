@@ -1,6 +1,6 @@
 # SPEC 10 — Touch D-pad for the four real games on phones
 
-> **Status:** Approved
+> **Status:** Implemented
 > **Depends on:** SPEC 05, SPEC 07, SPEC 08, SPEC 09
 > **Date:** 2026-11-24
 > **Objective:** Show an on-screen D-pad, plus one action button where a game needs it, on phones when a real game opens, so Asteroids, Tetris, Arkanoid and Snake can be played by touch.
@@ -88,18 +88,18 @@ Rules:
 
 ## Acceptance criteria
 
-- [ ] On a phone (coarse pointer), opening `/games/asteroids/play` shows the D-pad and a FIRE button below the game screen without any extra tap.
-- [ ] On a phone, opening `/games/tetris/play` shows the D-pad and a DROP button. Its up button rotates once per press.
-- [ ] On a phone, opening `/games/arkanoid/play` shows left and right buttons and no action button. Holding left moves the paddle left until released.
-- [ ] On a phone, opening `/games/snake/play` shows the four direction buttons. Each press turns the snake, and a reversal into the neck is ignored.
-- [ ] Holding a direction button in Asteroids rotates the ship. Holding up thrusts. Holding FIRE fires, as the Space key does.
-- [ ] Tapping the HUD `PAUSE` button pauses the game on a phone. Tapping it again (now `RESUME`) resumes. The D-pad releases any held button when paused.
-- [ ] While a D-pad button is held, the page does not scroll or zoom.
-- [ ] On a phone in portrait and in landscape, the canvas fits the screen width and no part of the canvas is cut off.
-- [ ] On a laptop with a mouse (fine pointer), no D-pad appears on any real game. The keyboard note is unchanged for the games that show it on fine pointers.
-- [ ] On a touch laptop that reports a fine pointer, no D-pad appears and the game plays as it does today.
+- [x] On a phone (coarse pointer), opening `/games/asteroids/play` shows the D-pad and a FIRE button below the game screen without any extra tap.
+- [x] On a phone, opening `/games/tetris/play` shows the D-pad and a DROP button. Its up button rotates once per press.
+- [x] On a phone, opening `/games/arkanoid/play` shows left and right buttons and no action button. Holding left moves the paddle left until released.
+- [x] On a phone, opening `/games/snake/play` shows the four direction buttons. Each press turns the snake, and a reversal into the neck is ignored.
+- [x] Holding a direction button in Asteroids rotates the ship. Holding up thrusts. Holding FIRE fires, as the Space key does.
+- [x] Tapping the HUD `PAUSE` button pauses the game on a phone. Tapping it again (now `RESUME`) resumes. The D-pad releases any held button when paused.
+- [x] While a D-pad button is held, the page does not scroll or zoom.
+- [x] On a phone in portrait and in landscape, the canvas fits the screen width and no part of the canvas is cut off.
+- [x] On a laptop with a mouse (fine pointer), no D-pad appears on any real game. The keyboard note is unchanged for the games that show it on fine pointers.
+- [x] On a touch laptop that reports a fine pointer, no D-pad appears and the game plays as it does today.
 - [x] On the six placeholder games, the player page is unchanged.
-- [ ] Keyboard controls still work on desktop for all four games.
+- [x] Keyboard controls still work on desktop for all four games.
 - [x] `npx tsc --noEmit` passes with no errors.
 - [x] `npm run lint` passes with no errors.
 - [x] `npm run build` passes.
