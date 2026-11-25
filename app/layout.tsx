@@ -33,6 +33,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             </Suspense>
             <main className="av-main">{children}</main>
             <footer
+              className="av-footer"
               style={{
                 borderTop: '1px solid var(--line)',
                 padding: '20px 32px',

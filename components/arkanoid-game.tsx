@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useSyncExternalStore, type ChangeEvent } from 'react';
+import { createPortal } from 'react-dom';
 import type { TouchControls } from '@/lib/touch/controls';
 import { H, TOUCH_PADDLE_SPEED, W } from '@/lib/arkanoid/constants';
 import { createGame, setPaused, step } from '@/lib/arkanoid/engine';
@@ -60,6 +61,8 @@ function saveSkin(skin: SkinId): void {
 type Props = {
   // Touch state from the player page. Merged with the keyboard in step 4.
   touch: TouchControls;
+  // Element for the SKIN select on phones (the bottom bar). Missing or null: the select stays inline.
+  skinSlot?: HTMLElement | null;
   // Controlled by the player. true pauses the engine, false resumes it.
   paused: boolean;
   // Called when score, lives, or level change.
@@ -77,7 +80,7 @@ function playCopy(source: HTMLAudioElement): void {
   copy.play().catch(() => {});
 }
 
-export function ArkanoidGame({ paused, onStats, onEnd, onTogglePause, touch }: Props) {
+export function ArkanoidGame({ paused, onStats, onEnd, onTogglePause, touch, skinSlot }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Classic on the server. The saved skin is read on the client.
@@ -190,6 +193,36 @@ export function ArkanoidGame({ paused, onStats, onEnd, onTogglePause, touch }: P
   }
 
   // Fills the parent (the CRT screen arena). The canvas keeps its 4:3 ratio inside it.
+  // The SKIN select. Inline in the game screen, or in the phone bottom bar through skinSlot.
+  const skinField = (
+    <div
+      className="field"
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 12, margin: 0 }}
+    >
+      <label htmlFor="arkanoid-skin">SKIN</label>
+      <select
+        id="arkanoid-skin"
+        value={skin}
+        onChange={handleSkinChange}
+        style={{
+          height: 32,
+          background: 'var(--bg)',
+          color: 'var(--ink)',
+          border: '1px solid var(--line)',
+          padding: '0 8px',
+          fontFamily: 'var(--mono)',
+          fontSize: 12,
+        }}
+      >
+        {SKIN_IDS.map((id) => (
+          <option key={id} value={id}>
+            {SKINS[id].label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+
   return (
     <div
       style={{
@@ -219,32 +252,7 @@ export function ArkanoidGame({ paused, onStats, onEnd, onTogglePause, touch }: P
         }}
       />
 
-      <div
-        className="field"
-        style={{ flexDirection: 'row', alignItems: 'center', gap: 12, margin: 0 }}
-      >
-        <label htmlFor="arkanoid-skin">SKIN</label>
-        <select
-          id="arkanoid-skin"
-          value={skin}
-          onChange={handleSkinChange}
-          style={{
-            height: 32,
-            background: 'var(--bg)',
-            color: 'var(--ink)',
-            border: '1px solid var(--line)',
-            padding: '0 8px',
-            fontFamily: 'var(--mono)',
-            fontSize: 12,
-          }}
-        >
-          {SKIN_IDS.map((id) => (
-            <option key={id} value={id}>
-              {SKINS[id].label}
-            </option>
-          ))}
-        </select>
-      </div>
+      {skinSlot ? createPortal(skinField, skinSlot) : skinField}
     </div>
   );
 }

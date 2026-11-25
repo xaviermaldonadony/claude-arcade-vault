@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useSyncExternalStore, type ChangeEvent } from 'react';
+import { createPortal } from 'react-dom';
 import type { TouchControls } from '@/lib/touch/controls';
 import { attachKeyboard } from '@/lib/asteroids/input';
 import { createGame, setPaused, step } from '@/lib/asteroids/engine';
@@ -57,6 +58,8 @@ function saveSkin(skin: SkinId): void {
 type Props = {
   // Touch state from the player page. Merged with the keyboard in step 4.
   touch: TouchControls;
+  // Element for the SKIN select on phones (the bottom bar). Missing or null: the select stays inline.
+  skinSlot?: HTMLElement | null;
   // Controlled by the player. true pauses the engine, false resumes it.
   paused: boolean;
   // Called when score, lives, or level change.
@@ -67,7 +70,7 @@ type Props = {
   onTogglePause?: () => void;
 };
 
-export function AsteroidsGame({ paused, onStats, onEnd, onTogglePause, touch }: Props) {
+export function AsteroidsGame({ paused, onStats, onEnd, onTogglePause, touch, skinSlot }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Classic on the server. The saved skin is read on the client.
@@ -117,8 +120,8 @@ export function AsteroidsGame({ paused, onStats, onEnd, onTogglePause, touch }: 
         {
           left: k.left || held.has('left'),
           right: k.right || held.has('right'),
-          thrust: k.thrust || held.has('up'),
-          fire: k.fire || held.has('action'),
+          thrust: k.thrust || held.has('up') || held.has('b'),
+          fire: k.fire || held.has('a'),
         },
         dt,
       );
@@ -155,6 +158,36 @@ export function AsteroidsGame({ paused, onStats, onEnd, onTogglePause, touch }: 
   }
 
   // Fills the parent (the CRT screen arena). The canvas keeps its 4:3 ratio inside it, with the SKIN select below.
+  // The SKIN select. Inline in the game screen, or in the phone bottom bar through skinSlot.
+  const skinField = (
+    <div
+      className="field"
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 12, margin: 0 }}
+    >
+      <label htmlFor="asteroids-skin">SKIN</label>
+      <select
+        id="asteroids-skin"
+        value={skin}
+        onChange={handleSkinChange}
+        style={{
+          height: 32,
+          background: 'var(--bg)',
+          color: 'var(--ink)',
+          border: '1px solid var(--line)',
+          padding: '0 8px',
+          fontFamily: 'var(--mono)',
+          fontSize: 12,
+        }}
+      >
+        {SKIN_IDS.map((id) => (
+          <option key={id} value={id}>
+            {SKINS[id].label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+
   return (
     <div
       style={{
@@ -184,32 +217,7 @@ export function AsteroidsGame({ paused, onStats, onEnd, onTogglePause, touch }: 
         }}
       />
 
-      <div
-        className="field"
-        style={{ flexDirection: 'row', alignItems: 'center', gap: 12, margin: 0 }}
-      >
-        <label htmlFor="asteroids-skin">SKIN</label>
-        <select
-          id="asteroids-skin"
-          value={skin}
-          onChange={handleSkinChange}
-          style={{
-            height: 32,
-            background: 'var(--bg)',
-            color: 'var(--ink)',
-            border: '1px solid var(--line)',
-            padding: '0 8px',
-            fontFamily: 'var(--mono)',
-            fontSize: 12,
-          }}
-        >
-          {SKIN_IDS.map((id) => (
-            <option key={id} value={id}>
-              {SKINS[id].label}
-            </option>
-          ))}
-        </select>
-      </div>
+      {skinSlot ? createPortal(skinField, skinSlot) : skinField}
     </div>
   );
 }

@@ -26,6 +26,8 @@ export type HudValues = { score: number; level: number; slot: HudSlot };
 export type RealGameProps = {
   // Touch state from the player page (SPEC 10). Merged with the keyboard by each game.
   touch: TouchControls;
+  // Element for the SKIN select on phones (the bottom bar). Null or missing: the select stays inline.
+  skinSlot?: HTMLElement | null;
   // Controlled by the player. true pauses the engine, false resumes it.
   paused: boolean;
   onStats: (stats: GameStats) => void;
