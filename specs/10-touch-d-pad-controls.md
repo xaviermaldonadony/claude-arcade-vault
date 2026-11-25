@@ -98,11 +98,11 @@ Rules:
 - [ ] On a phone in portrait and in landscape, the canvas fits the screen width and no part of the canvas is cut off.
 - [ ] On a laptop with a mouse (fine pointer), no D-pad appears on any real game. The keyboard note is unchanged for the games that show it on fine pointers.
 - [ ] On a touch laptop that reports a fine pointer, no D-pad appears and the game plays as it does today.
-- [ ] On the six placeholder games, the player page is unchanged.
+- [x] On the six placeholder games, the player page is unchanged.
 - [ ] Keyboard controls still work on desktop for all four games.
-- [ ] `npx tsc --noEmit` passes with no errors.
-- [ ] `npm run lint` passes with no errors.
-- [ ] `npm run build` passes.
+- [x] `npx tsc --noEmit` passes with no errors.
+- [x] `npm run lint` passes with no errors.
+- [x] `npm run build` passes.
 
 ## Decisions taken and discarded
 
