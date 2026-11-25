@@ -13,14 +13,15 @@ SPEC 05, 07, 08 and 09 each show `THIS GAME NEEDS A KEYBOARD` on coarse pointers
 
 **In:**
 
-- A simple D-pad with four buttons: up, down, left, right. It is drawn under the game canvas.
+- A simple D-pad with four buttons: up, down, left, right. It is drawn below the CRT frame, under the game screen, not inside it.
 - One action button per game that needs one, shown beside the D-pad:
   - Asteroids: `FIRE` (sends Space).
   - Tetris: `DROP` (sends Space, hard drop).
   - Arkanoid and Snake: no action button.
 - The D-pad and action button appear when a real game page opens, and only when the browser reports a coarse pointer (`(pointer: coarse)`, a finger-driven screen).
 - Each game's D-pad sends the same inputs as its keyboard controls (see the mapping below). The engines do not change.
-- The four real game components replace `THIS GAME NEEDS A KEYBOARD` on coarse pointers with the D-pad.
+- The player page (`components/game-player.tsx`) shows the D-pad on coarse pointers for the four real games, in place of the keyboard note. Each real game component receives the touch state as a `touch` prop.
+- Phone layout: the D-pad sits outside `.crt-screen` so the canvas keeps the full screen height.
 - Visual style: a dark, pixel-style D-pad and buttons that match the existing arcade palette in `app/arcade.css`. The user asked for a rough draft to be styled better.
 - Touch buttons use pointer events, release on pointer up or cancel, and do not scroll or zoom the page while held.
 - The canvas scales to the screen width in portrait and landscape. The existing HUD `PAUSE` button is the touch pause.
@@ -31,6 +32,7 @@ SPEC 05, 07, 08 and 09 each show `THIS GAME NEEDS A KEYBOARD` on coarse pointers
 - Swipe, drag or tap gestures on the canvas.
 - A second, separate pause button. The HUD `PAUSE` button already works with touch.
 - A rotate-your-phone prompt. The canvas scales to fit instead.
+- Resizing the phone game screen or the CRT frame. Needs its own spec.
 - Touch on the six placeholder games. Their player pages keep the fake ticker and their current note.
 - Touch laptops and any device with a fine pointer. Their behavior is unchanged.
 - Haptic feedback and sound changes.
@@ -77,16 +79,16 @@ Rules:
 ## Implementation plan
 
 1. **Touch state.** Create `lib/touch/controls.ts` exporting `createTouchControls()` with the type above. It holds a `Set` of held keys and a `Set` of pending one-shot presses. It has no DOM, React, or Next imports, so it can be unit-checked later. Verify with `npx tsc --noEmit`.
-2. **D-pad component.** Create `components/touch-dpad.tsx` (client). Props: `controls: TouchControls`, `game: 'asteroids' | 'tetris' | 'arkanoid' | 'snake'`. It renders a 3x3 grid with the four direction buttons and the action button at the right, sized for thumbs (at least 56 px, minimum 44 px on the smallest phones). Each button calls `press` on `pointerdown` and `release` on `pointerup`, `pointercancel`, and `pointerleave`. It calls `setPointerCapture` and `preventDefault` so the page does not scroll. It is inside a `<div>` with `touch-action: none`. Styles go in `app/arcade.css`, reusing the existing palette variables. Verify with `npx tsc --noEmit`.
-3. **Coarse-pointer gate.** In each real game component, replace the `THIS GAME NEEDS A KEYBOARD` note with the D-pad when `(pointer: coarse)` matches. Keep the existing effect that reads the media query after mount, so server render and hydration match. When it does not match, render nothing extra. Keep the game and its keyboard tracker unchanged.
-4. **Merge input.** In `components/asteroids-game.tsx`, `components/tetris-game.tsx`, `components/arkanoid-game.tsx` and `components/snake-game.tsx`, combine the touch state with the keyboard read each frame. For held inputs, a direction is on if the key or the touch button is held. For Tetris one-shots, `takePress` from touch and the keyboard's press both count. For Snake, a touch press is queued as a turn the same way a keyboard press is. The engine receives the same input types as before.
+2. **D-pad component.** Create `components/touch-dpad.tsx` (client). Props: `controls: TouchControls`, `game: 'asteroids' | 'tetris' | 'arkanoid' | 'snake'`. It renders a 3x3 grid with the four direction buttons and the action button at the right, sized for thumbs: direction keys `clamp(34px, 8.5vw, 38px)`, action button `clamp(46px, 12.5vw, 50px)`. Keys are below the 44 px touch guideline on purpose, at the user's request for a smaller pad. Each button calls `press` on `pointerdown` and `release` on `pointerup`, `pointercancel`, and `pointerleave`. It calls `setPointerCapture` and `preventDefault` so the page does not scroll. It is inside a `<div>` with `touch-action: none`. Styles go in `app/arcade.css`, reusing the existing palette variables. Verify with `npx tsc --noEmit`.
+3. **Coarse-pointer gate and placement.** Create `lib/touch/coarse.ts` with `subscribeCoarse`, `readCoarse` and `serverCoarse`, moved from the four game components, which no longer need them. In `components/game-player.tsx`, read `isCoarse` with `useSyncExternalStore`, create the touch state with `useState(createTouchControls)`, pass it to the real game as `touch`, and render `<TouchDpad>` below the `.crt` frame when the game is a real game and `isCoarse` is true. The D-pad is outside `.crt-screen`, so the canvas keeps the screen. Remove the keyboard note from the four game components. Keep the check after mount so hydration matches. Verify with `npx tsc --noEmit`.
+4. **Merge input.** Each real game takes the `touch` prop from step 3 and merges it with its keyboard read every frame. For held inputs, a direction is on if the key or the touch button is held. For Tetris one-shots, `takePress` from touch and the keyboard's press both count. For Snake, a touch press is queued as a turn the same way a keyboard press is. The engine receives the same input types as before.
 5. **Clear on pause and blur.** When the game is paused, or the window loses focus, call `clear()` on the touch state so no button stays stuck.
 6. **Canvas fit.** Make the canvas scale to the container width with its aspect ratio kept, in portrait and landscape, using CSS `max-width: 100%` and `height: auto`. The canvas keeps its internal pixel size. Verify on a phone in both orientations.
 7. **Docs.** Update `CLAUDE.md` Architecture: add one paragraph for `lib/touch/` and `components/touch-dpad.tsx`, and say that real games show the D-pad on coarse pointers in place of the keyboard note. Do not touch the `AGENTS.md` block. Do not edit SPEC 05, 07, 08 or 09.
 
 ## Acceptance criteria
 
-- [ ] On a phone (coarse pointer), opening `/games/asteroids/play` shows the D-pad and a FIRE button under the canvas without any extra tap.
+- [ ] On a phone (coarse pointer), opening `/games/asteroids/play` shows the D-pad and a FIRE button below the game screen without any extra tap.
 - [ ] On a phone, opening `/games/tetris/play` shows the D-pad and a DROP button. Its up button rotates once per press.
 - [ ] On a phone, opening `/games/arkanoid/play` shows left and right buttons and no action button. Holding left moves the paddle left until released.
 - [ ] On a phone, opening `/games/snake/play` shows the four direction buttons. Each press turns the snake, and a reversal into the neck is ignored.
@@ -109,26 +111,6 @@ Rules:
 - **Action button only where a game needs one.** Yes. Asteroids needs fire and Tetris needs hard drop to play. Arkanoid and Snake need nothing more than the D-pad. Discarded: one action button on every game, because it would do nothing on Arkanoid and Snake.
 - **No separate pause button; the HUD `PAUSE` button is the touch pause.** The user first asked for a pause button beside the D-pad. The HUD already has `PAUSE`, which works with touch, so a second one would duplicate it. The user confirmed the HUD button and asked for the label to read `PAUSE`.
 - **Canvas scales to fit in portrait.** Yes, as the user chose. Discarded: a rotate-your-phone prompt.
+- **Screen size is not changed here.** The phone screen is still the 4:3 CRT frame. A bigger screen needs its own spec.
 - **Styling is ours.** The user said the draft could be styled better. The D-pad uses the arcade palette and pixel font in `app/arcade.css`, not a copy of the draft's look.
-- **Position: under the canvas.** This is my choice. The screenshot shows no D-pad and does not mark a position clearly. Under the canvas keeps the thumbs off the play area and is reachable with both thumbs.
-- **Tetris `down` is held, not one-shot.** Matches the keyboard tracker, so the soft drop repeats as it does on a keyboard.
-- **Specs 05, 07, 08 and 09 are not edited.** Their out-of-scope notes stay true for their own time. This spec records the reversal.
-
-## Identified risks
-
-- **Stuck buttons.** A pointer that leaves the page while held can miss its `pointerup`. Mitigation: `pointercancel`, `pointerleave`, and `clear()` on pause and blur.
-- **Scroll and zoom during play.** Mitigation: `touch-action: none` on the D-pad and `preventDefault` on the press.
-- **Tetris one-shot timing.** A quick tap can be missed if the press is cleared before the frame reads it. Mitigation: `takePress` reads and clears the pending press once per frame, as the keyboard tracker does.
-- **Hydration mismatch.** The coarse-pointer check must run in an effect after mount, not during render, so server render and the first client render agree.
-- **Small screens.** On a narrow phone the D-pad and action button must still fit under the canvas. Mitigation: size buttons with `clamp()` and check the smallest phone size.
-
-## What is **not** in this spec
-
-- Gestures on the canvas, a second pause button, and a rotate prompt.
-
-Placeholder games stay as they are: the fake ticker and their current note. Their player pages are not changed.
-
-- Touch on the six placeholder games.
-- Changes to laptops and any fine-pointer device.
-- Changes to the engines, the keyboard trackers, scoring, or the catalog.
-- Tests and a test runner.
+- **Position: below the CRT frame.** Under the game screen, as the user chose. The first Step 3 put the D-pad inside `.crt-screen`, where it took all the space and the canvas shrank to zero height. Moving it outside the screen fixes that.

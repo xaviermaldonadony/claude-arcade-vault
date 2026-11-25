@@ -18,14 +18,11 @@ const LAYOUT: Record<
 
 const ARROWS: Record<Direction, string> = { up: '▲', down: '▼', left: '◀', right: '▶' };
 
-export function TouchDpad({
-  game,
-  controls,
-}: {
-  game: keyof typeof LAYOUT;
-  controls: TouchControls;
-}) {
-  const { directions, action } = LAYOUT[game];
+export function TouchDpad({ game, controls }: { game: string; controls: TouchControls }) {
+  const layout = LAYOUT[game as keyof typeof LAYOUT];
+  // Games without a D-pad layout show nothing.
+  if (!layout) return null;
+  const { directions, action } = layout;
 
   const bind = (key: TouchKey) => ({
     onPointerDown: (e: PointerEvent<HTMLButtonElement>) => {

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useSyncExternalStore, type ChangeEvent } from 'react';
+import type { TouchControls } from '@/lib/touch/controls';
 import { BLOCK, COLS, ROWS } from '@/lib/tetris/constants';
 import { createGame, setPaused, step } from '@/lib/tetris/engine';
 import { attachKeyboard } from '@/lib/tetris/input';
@@ -12,18 +13,6 @@ import type { TetrisState } from '@/lib/tetris/types';
 const CANVAS_W = COLS * BLOCK + 120;
 const CANVAS_H = ROWS * BLOCK;
 const SKIN_KEY = 'tetris-skin';
-
-const COARSE_QUERY = '(pointer: coarse)';
-
-function subscribeCoarse(onChange: () => void): () => void {
-  const mq = window.matchMedia(COARSE_QUERY);
-  mq.addEventListener('change', onChange);
-  return () => mq.removeEventListener('change', onChange);
-}
-
-const readCoarse = (): boolean => window.matchMedia(COARSE_QUERY).matches;
-// Server render assumes a fine pointer, so hydration matches and the note appears only on the client.
-const serverCoarse = (): boolean => false;
 
 // Storage can be blocked (private mode, disabled cookies). Then the skin simply does not persist.
 function readStoredSkin(): SkinId | null {
@@ -71,6 +60,8 @@ function saveSkin(skin: SkinId): void {
 type Stats = { score: number; lines: number; level: number };
 
 type Props = {
+  // Touch state from the player page. Merged with the keyboard in step 4.
+  touch: TouchControls;
   // Controlled by the player. true pauses the engine, false resumes it.
   paused: boolean;
   // Called when score, lines, or level change.
@@ -83,8 +74,6 @@ type Props = {
 
 export function TetrisGame({ paused, onStats, onEnd, onTogglePause }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  // Coarse pointer means a touch device. Touch controls are out of scope.
-  const needsKeyboard = useSyncExternalStore(subscribeCoarse, readCoarse, serverCoarse);
 
   // Retro on the server. The saved skin is read on the client.
   const skin = useSyncExternalStore(subscribeSkin, readSkin, serverSkin);
@@ -213,21 +202,6 @@ export function TetrisGame({ paused, onStats, onEnd, onTogglePause }: Props) {
           ))}
         </select>
       </div>
-
-      {needsKeyboard && (
-        <p
-          style={{
-            margin: 0,
-            textAlign: 'center',
-            fontFamily: 'var(--mono)',
-            fontSize: 11,
-            letterSpacing: '0.16em',
-            color: 'var(--ink-dim)',
-          }}
-        >
-          THIS GAME NEEDS A KEYBOARD
-        </p>
-      )}
     </div>
   );
 }
