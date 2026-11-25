@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useSyncExternalStore, type ChangeEvent } from 'react';
-import { H, W } from '@/lib/arkanoid/constants';
+import type { TouchControls } from '@/lib/touch/controls';
+import { H, TOUCH_PADDLE_SPEED, W } from '@/lib/arkanoid/constants';
 import { createGame, setPaused, step } from '@/lib/arkanoid/engine';
 import { attachKeyboard } from '@/lib/arkanoid/input';
 import { drawGame, loadSprites } from '@/lib/arkanoid/render';
@@ -12,18 +13,6 @@ const SPRITE_SHEET_SRC = '/arkanoid/spritesheet-breakout.png';
 const REBOUND_SRC = '/arkanoid/sounds/rebound.mp3';
 const DESTROY_SRC = '/arkanoid/sounds/destroy.mp3';
 const SKIN_KEY = 'arkanoid-skin';
-
-const COARSE_QUERY = '(pointer: coarse)';
-
-function subscribeCoarse(onChange: () => void): () => void {
-  const mq = window.matchMedia(COARSE_QUERY);
-  mq.addEventListener('change', onChange);
-  return () => mq.removeEventListener('change', onChange);
-}
-
-const readCoarse = (): boolean => window.matchMedia(COARSE_QUERY).matches;
-// Server render assumes a fine pointer, so hydration matches and the note appears only on the client.
-const serverCoarse = (): boolean => false;
 
 // Storage can be blocked (private mode, disabled cookies). Then the skin simply does not persist.
 function readStoredSkin(): SkinId | null {
@@ -69,6 +58,8 @@ function saveSkin(skin: SkinId): void {
 }
 
 type Props = {
+  // Touch state from the player page. Merged with the keyboard in step 4.
+  touch: TouchControls;
   // Controlled by the player. true pauses the engine, false resumes it.
   paused: boolean;
   // Called when score, lives, or level change.
@@ -86,10 +77,8 @@ function playCopy(source: HTMLAudioElement): void {
   copy.play().catch(() => {});
 }
 
-export function ArkanoidGame({ paused, onStats, onEnd, onTogglePause }: Props) {
+export function ArkanoidGame({ paused, onStats, onEnd, onTogglePause, touch }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  // Coarse pointer means a touch device. Touch controls are out of scope.
-  const needsKeyboard = useSyncExternalStore(subscribeCoarse, readCoarse, serverCoarse);
 
   // Classic on the server. The saved skin is read on the client.
   const skin = useSyncExternalStore(subscribeSkin, readSkin, serverSkin);
@@ -100,6 +89,8 @@ export function ArkanoidGame({ paused, onStats, onEnd, onTogglePause }: Props) {
   const onEndRef = useRef(onEnd);
   const onTogglePauseRef = useRef(onTogglePause);
   const skinRef = useRef(skin);
+  // The touch state never changes identity, so the frame loop reads it through a ref.
+  const touchRef = useRef(touch);
   useEffect(() => {
     pausedRef.current = paused;
     onStatsRef.current = onStats;
@@ -144,7 +135,15 @@ export function ArkanoidGame({ paused, onStats, onEnd, onTogglePause }: Props) {
       if (keyboard.takePausePress()) onTogglePauseRef.current?.();
 
       state = setPaused(state, pausedRef.current);
-      const input = { ...keyboard.read(), pointerX };
+      const k = keyboard.read();
+      const held = touchRef.current.held();
+      const input = {
+        left: k.left || held.has('left'),
+        right: k.right || held.has('right'),
+        pointerX,
+        // The D-pad moves the paddle faster than the keyboard (SPEC 10).
+        paddleSpeed: held.has('left') || held.has('right') ? TOUCH_PADDLE_SPEED : undefined,
+      };
       pointerX = null;
       state = step(state, input, dt);
 
@@ -246,21 +245,6 @@ export function ArkanoidGame({ paused, onStats, onEnd, onTogglePause }: Props) {
           ))}
         </select>
       </div>
-
-      {needsKeyboard && (
-        <p
-          style={{
-            margin: 0,
-            textAlign: 'center',
-            fontFamily: 'var(--mono)',
-            fontSize: 11,
-            letterSpacing: '0.16em',
-            color: 'var(--ink-dim)',
-          }}
-        >
-          THIS GAME NEEDS A KEYBOARD
-        </p>
-      )}
     </div>
   );
 }

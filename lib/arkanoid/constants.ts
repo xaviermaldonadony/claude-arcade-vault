@@ -9,7 +9,9 @@ export const H = 600;
 export const DT_MAX = 0.05;
 
 // Paddle. Mouse and arrow keys move its center or its left edge (see engine.ts).
-export const PADDLE_SPEED = 400; // px/s
+export const PADDLE_SPEED = 400; // px/s, keyboard
+// Paddle speed when the D-pad drives it (SPEC 10). Faster, so a thumb press reaches its target in time.
+export const TOUCH_PADDLE_SPEED = 720; // px/s
 export const PADDLE_W = 81;
 export const PADDLE_H = 14;
 export const PADDLE_Y = 560;

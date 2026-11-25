@@ -1,10 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { useAuth } from '@/components/auth-provider';
+import { TouchDpad } from '@/components/touch-dpad';
 import { getRealGame, type GameStats, type HudSlot } from '@/lib/games-registry';
 import type { Game } from '@/lib/leaderboard';
+import { createTouchControls } from '@/lib/touch/controls';
+import { readCoarse, serverCoarse, subscribeCoarse } from '@/lib/touch/coarse';
 
 // Fake ticker and arena for the games without an engine yet. Real games come from lib/games-registry.ts.
 // Real games submit scores (SPEC 06, SPEC 07). Scores are saved with POST /api/scores, not localStorage.
@@ -21,12 +24,24 @@ export function GamePlayer({ game }: { game: Game }) {
   const entry = getRealGame(game.id);
   const RealGame = entry?.component;
   const isRealGame = entry !== undefined;
+  // Phones (coarse pointer) get the on-screen D-pad below the CRT frame (SPEC 10).
+  const isCoarse = useSyncExternalStore(subscribeCoarse, readCoarse, serverCoarse);
+  const [touch] = useState(createTouchControls);
   const [score, setScore] = useState(0);
   const [realSlot, setRealSlot] = useState<HudSlot>(INITIAL_SLOT);
   const [realLevel, setRealLevel] = useState(1);
   // Changing the key remounts the engine, which starts a new game.
   const [gameKey, setGameKey] = useState(0);
   const [paused, setPaused] = useState(false);
+  // Release every D-pad button on pause and when the window loses focus, so none stays stuck (SPEC 10).
+  useEffect(() => {
+    if (paused) touch.clear();
+  }, [paused, touch]);
+  useEffect(() => {
+    const onBlur = () => touch.clear();
+    window.addEventListener('blur', onBlur);
+    return () => window.removeEventListener('blur', onBlur);
+  }, [touch]);
   const [over, setOver] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   // null means "not edited yet": show the signed-in name, or GUEST.
@@ -129,6 +144,7 @@ export function GamePlayer({ game }: { game: Game }) {
             <div className="game-arena">
               <RealGame
                 key={gameKey}
+                touch={touch}
                 paused={paused || over}
                 onStats={handleStats}
                 onEnd={handleEnd}
@@ -171,6 +187,8 @@ export function GamePlayer({ game }: { game: Game }) {
           <span>LOAD · 1MB</span>
         </div>
       </div>
+
+      {isRealGame && isCoarse && <TouchDpad game={game.id} controls={touch} />}
 
       {over && (
         <div className="modal-bd">

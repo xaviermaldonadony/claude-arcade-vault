@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useSyncExternalStore, type ChangeEvent } from 'react';
+import type { TouchControls } from '@/lib/touch/controls';
+import type { Dir } from '@/lib/snake/types';
 import { FRUIT_SHEET } from '@/lib/snake/atlas';
 import { attachKeyboard } from '@/lib/snake/input';
 import { createGame, level, setPaused, step } from '@/lib/snake/engine';
@@ -10,18 +12,6 @@ import type { SnakeState } from '@/lib/snake/types';
 import { CELL, COLS, ROWS } from '@/lib/snake/constants';
 
 const SKIN_KEY = 'snake-skin';
-
-const COARSE_QUERY = '(pointer: coarse)';
-
-function subscribeCoarse(onChange: () => void): () => void {
-  const mq = window.matchMedia(COARSE_QUERY);
-  mq.addEventListener('change', onChange);
-  return () => mq.removeEventListener('change', onChange);
-}
-
-const readCoarse = (): boolean => window.matchMedia(COARSE_QUERY).matches;
-// Server render assumes a fine pointer, so hydration matches and the note appears only on the client.
-const serverCoarse = (): boolean => false;
 
 // Storage can be blocked (private mode, disabled cookies). Then the skin simply does not persist.
 function readStoredSkin(): SkinId | null {
@@ -67,6 +57,8 @@ function saveSkin(skin: SkinId): void {
 }
 
 type Props = {
+  // Touch state from the player page. Merged with the keyboard in step 4.
+  touch: TouchControls;
   // Controlled by the player. true pauses the engine, false resumes it.
   paused: boolean;
   // Called when score, level, or length change.
@@ -77,10 +69,16 @@ type Props = {
   onTogglePause?: () => void;
 };
 
-export function SnakeGame({ paused, onStats, onEnd, onTogglePause }: Props) {
+const TOUCH_TURNS: Dir[] = ['up', 'down', 'left', 'right'];
+
+// First D-pad press since the last frame, as a turn. A keyboard turn wins when both arrive.
+function takeTouchTurn(touch: TouchControls): Dir | null {
+  for (const dir of TOUCH_TURNS) if (touch.takePress(dir)) return dir;
+  return null;
+}
+
+export function SnakeGame({ paused, onStats, onEnd, onTogglePause, touch }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  // Coarse pointer means a touch device. Touch controls are out of scope.
-  const needsKeyboard = useSyncExternalStore(subscribeCoarse, readCoarse, serverCoarse);
   // Classic on the server. The saved skin is read on the client.
   const skin = useSyncExternalStore(subscribeSkin, readSkin, serverSkin);
 
@@ -90,6 +88,8 @@ export function SnakeGame({ paused, onStats, onEnd, onTogglePause }: Props) {
   const onEndRef = useRef(onEnd);
   const onTogglePauseRef = useRef(onTogglePause);
   const skinRef = useRef(skin);
+  // The touch state never changes identity, so the frame loop reads it through a ref.
+  const touchRef = useRef(touch);
   useEffect(() => {
     pausedRef.current = paused;
     onStatsRef.current = onStats;
@@ -125,7 +125,7 @@ export function SnakeGame({ paused, onStats, onEnd, onTogglePause }: Props) {
       if (keyboard.takePausePress()) onTogglePauseRef.current?.();
 
       state = setPaused(state, pausedRef.current);
-      state = step(state, { turn: keyboard.takeTurn() }, dt);
+      state = step(state, { turn: keyboard.takeTurn() ?? takeTouchTurn(touchRef.current) }, dt);
 
       const key = `${state.score}|${state.fruits}|${state.status}`;
       if (key !== lastKey) {
@@ -219,21 +219,6 @@ export function SnakeGame({ paused, onStats, onEnd, onTogglePause }: Props) {
           ))}
         </select>
       </div>
-
-      {needsKeyboard && (
-        <p
-          style={{
-            margin: 0,
-            textAlign: 'center',
-            fontFamily: 'var(--mono)',
-            fontSize: 11,
-            letterSpacing: '0.16em',
-            color: 'var(--ink-dim)',
-          }}
-        >
-          THIS GAME NEEDS A KEYBOARD
-        </p>
-      )}
     </div>
   );
 }

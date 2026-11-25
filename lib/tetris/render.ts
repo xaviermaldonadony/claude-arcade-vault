@@ -78,6 +78,15 @@ function drawGrid(ctx: CanvasRenderingContext2D, skin: Skin): void {
   }
 }
 
+// Walls around the playfield and the NEXT box, so the edge of the board is visible and the
+// NEXT piece does not look like part of it.
+function drawFrames(ctx: CanvasRenderingContext2D): void {
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+  ctx.strokeRect(1, 1, BOARD_W - 2, BOARD_H - 2);
+  ctx.strokeRect(NEXT_X + 6, NEXT_Y + 6, NEXT_CELLS * BLOCK - 12, NEXT_CELLS * BLOCK - 12);
+}
+
 function drawOverlay(ctx: CanvasRenderingContext2D, title: string, sub: string): void {
   ctx.textAlign = 'center';
   ctx.fillStyle = WHITE;
@@ -101,6 +110,7 @@ export function drawTetris(
   ctx.fillStyle = skin.canvasBg;
   ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   drawGrid(ctx, skin);
+  drawFrames(ctx);
 
   for (let r = 0; r < ROWS; r++)
     for (let c = 0; c < COLS; c++)

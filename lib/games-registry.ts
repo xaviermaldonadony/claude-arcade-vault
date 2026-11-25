@@ -2,6 +2,7 @@
 // Adding a real game means one entry below (SPEC 07).
 
 import type { ComponentType } from 'react';
+import type { TouchControls } from '@/lib/touch/controls';
 import { ArkanoidGame } from '@/components/arkanoid-game';
 import { AsteroidsGame } from '@/components/asteroids-game';
 import { SnakeGame } from '@/components/snake-game';
@@ -23,6 +24,8 @@ export type HudSlot = { label: string; value: number; hearts: boolean };
 export type HudValues = { score: number; level: number; slot: HudSlot };
 
 export type RealGameProps = {
+  // Touch state from the player page (SPEC 10). Merged with the keyboard by each game.
+  touch: TouchControls;
   // Controlled by the player. true pauses the engine, false resumes it.
   paused: boolean;
   onStats: (stats: GameStats) => void;
