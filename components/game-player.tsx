@@ -33,6 +33,15 @@ export function GamePlayer({ game }: { game: Game }) {
   // Changing the key remounts the engine, which starts a new game.
   const [gameKey, setGameKey] = useState(0);
   const [paused, setPaused] = useState(false);
+  // Release every D-pad button on pause and when the window loses focus, so none stays stuck (SPEC 10).
+  useEffect(() => {
+    if (paused) touch.clear();
+  }, [paused, touch]);
+  useEffect(() => {
+    const onBlur = () => touch.clear();
+    window.addEventListener('blur', onBlur);
+    return () => window.removeEventListener('blur', onBlur);
+  }, [touch]);
   const [over, setOver] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   // null means "not edited yet": show the signed-in name, or GUEST.
