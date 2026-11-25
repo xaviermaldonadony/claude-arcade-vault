@@ -14,4 +14,5 @@ export const FRUITS_PER_LEVEL = 5; // HUD level = 1 + floor(fruits / FRUITS_PER_
 
 export const FRUIT_KINDS = 22; // must match FRUIT_ATLAS.length in lib/snake/atlas.ts
 export const MAX_QUEUED_TURNS = 2;
+export const BOOST_MULT = 2; // step-time multiplier while A is held (SPEC 10)
 export const DT_MAX = 0.05; // seconds; dt is clamped to this per frame

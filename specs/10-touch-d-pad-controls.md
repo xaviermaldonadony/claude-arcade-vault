@@ -22,6 +22,10 @@ SPEC 05, 07, 08 and 09 each show `THIS GAME NEEDS A KEYBOARD` on coarse pointers
 - Each game's D-pad sends the same inputs as its keyboard controls (see the mapping below). The engines do not change, except one optional field: Arkanoid's `paddleSpeed`, so the D-pad moves the paddle faster (see Decisions).
 - The player page (`components/game-player.tsx`) shows the D-pad on coarse pointers for the four real games, in place of the keyboard note. Each real game component receives the touch state as a `touch` prop.
 - Phone layout: the D-pad sits outside `.crt-screen` so the canvas keeps the full screen height.
+- Round B and A buttons to the right of the D-pad (redesign, see steps 8 to 12). B is blue and A is red. Unused keys are drawn dimmed and disabled.
+- A bottom bar under the controls with PAUSE (RESUME while paused), the SKIN select and EXIT. On phones the SKIN select moves from the game screen into this bar.
+- On phones, the navbar, its mobile menu and the footer line are hidden on game play pages only. Other pages keep them.
+- A/B actions: Asteroids A = FIRE, B = THRUST (up also thrusts). Tetris A = ROTATE (up also rotates), B = DROP. Snake A = BOOST (held, doubles the step rate). Arkanoid A and B are dimmed.
 - Visual style: a dark, pixel-style D-pad and buttons that match the existing arcade palette in `app/arcade.css`. The user asked for a rough draft to be styled better.
 - Touch buttons use pointer events, release on pointer up or cancel, and do not scroll or zoom the page while held.
 - The canvas scales to the screen width in portrait and landscape. The existing HUD `PAUSE` button is the touch pause.
@@ -47,7 +51,7 @@ Client-only types, in `lib/touch/controls.ts`:
 
 ```ts
 // lib/touch/controls.ts
-export type TouchKey = 'up' | 'down' | 'left' | 'right' | 'action';
+export type TouchKey = 'up' | 'down' | 'left' | 'right' | 'a' | 'b';
 
 export type TouchControls = {
   // Keys held down right now (pointer is still on the button).
@@ -86,6 +90,12 @@ Rules:
 6. **Canvas fit.** Make the canvas scale to the container width with its aspect ratio kept, in portrait and landscape, using CSS `max-width: 100%` and `height: auto`. The canvas keeps its internal pixel size. Verify on a phone in both orientations.
 7. **Docs.** Update `CLAUDE.md` Architecture: add one paragraph for `lib/touch/` and `components/touch-dpad.tsx`, and say that real games show the D-pad on coarse pointers in place of the keyboard note. Do not touch the `AGENTS.md` block. Do not edit SPEC 05, 07, 08 or 09.
 
+8. **Round A and B buttons.** Change `TouchKey` in `lib/touch/controls.ts` to `'up' | 'down' | 'left' | 'right' | 'a' | 'b'`. In `components/touch-dpad.tsx`, always draw the four direction keys and the round B and A buttons. `LAYOUT` lists the enabled keys per game. Disabled keys get `disabled` and the `is-off` class. Verify with `npx tsc --noEmit`.
+9. **Game input.** Asteroids: `fire` also reads `a`, and `thrust` also reads `b`. Tetris: `rotate` also reads `a`, and `hardDrop` reads `b` (was `action`). Snake: the engine gets `boost: held('a')`. Add `SnakeInput.boost?: boolean` and `BOOST_MULT = 2` in `lib/snake/`. While boost is set, the time added per frame is multiplied by `BOOST_MULT`. Unset behaves as before. Verify with a node script that compiles `lib/snake/engine.ts` to `/tmp` and shows more steps with boost.
+10. **Bottom bar and SKIN slot.** Create `components/touch-bar.tsx` with PAUSE or RESUME, an empty `div` slot for the SKIN select, and an EXIT link to `/games/<id>`. `components/game-player.tsx` renders it under the D-pad on coarse pointers for real games, and passes `skinSlot` to each game through `lib/games-registry.ts`. Each game renders its SKIN select with `createPortal` into the slot when it is set, and inline otherwise.
+11. **Hide navbar and footer.** `components/game-player.tsx` toggles the `av-play-touch` class on `document.body` while a real game page is open on a coarse pointer. `app/arcade.css` hides `.av-nav`, the mobile panel, the backdrop and `.av-footer` under that class. `app/layout.tsx` gives the footer the `av-footer` class.
+12. **Styles and docs.** Replace the D-pad styles in `app/arcade.css` with the round-button and bottom-bar styles, using `--touch-key` and `--touch-round` variables. Update the `CLAUDE.md` Architecture paragraph for the touch bar, A and B, and the skin slot. Do not touch the `AGENTS.md` block.
+
 ## Acceptance criteria
 
 - [x] On a phone (coarse pointer), opening `/games/asteroids/play` shows the D-pad and a FIRE button below the game screen without any extra tap.
@@ -104,6 +114,14 @@ Rules:
 - [x] `npm run lint` passes with no errors.
 - [x] `npm run build` passes.
 
+- [x] On a phone, the play page shows the D-pad, round B and A, and the bottom bar (PAUSE, SKIN, EXIT).
+- [x] On a phone, the SKIN select appears only in the bottom bar. Changing it changes the skin and the arrow keys still work afterwards.
+- [x] On a phone, PAUSE changes to RESUME while paused, and the D-pad releases any held button.
+- [x] On a phone, the navbar, its menu and the footer are not shown on a game play page. They are still shown on `/games` and the other pages.
+- [x] On a phone, Asteroids A fires and B thrusts. Tetris A rotates and B drops. Snake A boosts. Arkanoid A and B are dimmed and do nothing.
+- [x] On a desktop, the navbar and footer show on a game play page, there is no bottom bar, and the SKIN select is still inside the game screen.
+- [x] `npx tsc --noEmit`, `npm run lint` and `npm run build` pass.
+
 ## Decisions taken and discarded
 
 - **D-pad only on coarse pointers.** Yes. The user asked for phones only and for touch laptops to stay as they are. `(pointer: coarse)` matches phones and tablets and does not match touch laptops, which report a fine pointer. Discarded: `navigator.maxTouchPoints > 0`, because it would show the D-pad on touch laptops.
@@ -115,3 +133,11 @@ Rules:
 - **Faster Arkanoid paddle on the D-pad.** The user found the keyboard speed too slow to react with touch. The engine takes an optional `paddleSpeed` (720 px/s for touch) and the keyboard keeps 400 px/s. Discarded: changing `PADDLE_SPEED`, which would also change the keyboard game.
 - **Styling is ours.** The user said the draft could be styled better. The D-pad uses the arcade palette and pixel font in `app/arcade.css`, not a copy of the draft's look.
 - **Position: below the CRT frame.** Under the game screen, as the user chose. The first Step 3 put the D-pad inside `.crt-screen`, where it took all the space and the canvas shrank to zero height. Moving it outside the screen fixes that.
+
+## Identified risks
+
+- **Top HUD duplicates the bar.** On phones the top HUD keeps PAUSE and END, and the bottom bar adds PAUSE and EXIT. The user chose to keep the HUD.
+- **English, not Spanish.** The mockup showed Spanish labels, but the user asked for all text in English. The repo has no translation system, so every label is English.
+- **A/B mapping is my choice.** The user delegated it. Asteroids, Tetris and Snake use A and B. Arkanoid uses neither.
+- **Button sizes unchanged.** The mockup draws larger keys. The user tuned the keys smaller in earlier rounds, so they are set by `--touch-key` (40 to 44 px on phones, after the user asked for a bit more size). The play page HUD is compacted on phones so the controls fit on one screen.
+- **Navbar hidden on phone play pages.** The user asked for this. The only way back is EXIT in the bottom bar.

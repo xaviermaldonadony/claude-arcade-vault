@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { useAuth } from '@/components/auth-provider';
+import { TouchBar } from '@/components/touch-bar';
 import { TouchDpad } from '@/components/touch-dpad';
 import { getRealGame, type GameStats, type HudSlot } from '@/lib/games-registry';
 import type { Game } from '@/lib/leaderboard';
@@ -27,6 +28,14 @@ export function GamePlayer({ game }: { game: Game }) {
   // Phones (coarse pointer) get the on-screen D-pad below the CRT frame (SPEC 10).
   const isCoarse = useSyncExternalStore(subscribeCoarse, readCoarse, serverCoarse);
   const [touch] = useState(createTouchControls);
+  // The SKIN select slot in the phone bottom bar. Null until the bar mounts.
+  const [skinSlot, setSkinSlot] = useState<HTMLElement | null>(null);
+  // Phones on a real game play page: hide the navbar and footer (SPEC 10, change 9).
+  useEffect(() => {
+    const on = isRealGame && isCoarse;
+    document.body.classList.toggle('av-play-touch', on);
+    return () => document.body.classList.remove('av-play-touch');
+  }, [isRealGame, isCoarse]);
   const [score, setScore] = useState(0);
   const [realSlot, setRealSlot] = useState<HudSlot>(INITIAL_SLOT);
   const [realLevel, setRealLevel] = useState(1);
@@ -145,6 +154,7 @@ export function GamePlayer({ game }: { game: Game }) {
               <RealGame
                 key={gameKey}
                 touch={touch}
+                skinSlot={skinSlot}
                 paused={paused || over}
                 onStats={handleStats}
                 onEnd={handleEnd}
@@ -189,6 +199,14 @@ export function GamePlayer({ game }: { game: Game }) {
       </div>
 
       {isRealGame && isCoarse && <TouchDpad game={game.id} controls={touch} />}
+      {isRealGame && isCoarse && (
+        <TouchBar
+          gameId={game.id}
+          paused={paused}
+          onTogglePause={() => setPaused((p) => !p)}
+          setSkinSlot={setSkinSlot}
+        />
+      )}
 
       {over && (
         <div className="modal-bd">

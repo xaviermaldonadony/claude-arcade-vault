@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useSyncExternalStore, type ChangeEvent } from 'react';
+import { createPortal } from 'react-dom';
 import type { TouchControls } from '@/lib/touch/controls';
 import { BLOCK, COLS, ROWS } from '@/lib/tetris/constants';
 import { createGame, setPaused, step } from '@/lib/tetris/engine';
@@ -62,6 +63,8 @@ type Stats = { score: number; lines: number; level: number };
 type Props = {
   // Touch state from the player page. Merged with the keyboard in step 4.
   touch: TouchControls;
+  // Element for the SKIN select on phones (the bottom bar). Missing or null: the select stays inline.
+  skinSlot?: HTMLElement | null;
   // Controlled by the player. true pauses the engine, false resumes it.
   paused: boolean;
   // Called when score, lines, or level change.
@@ -75,7 +78,7 @@ type Props = {
 // Holding the D-pad Down repeats soft drop at this interval, in seconds.
 const TOUCH_SOFT_DROP_S = 0.05;
 
-export function TetrisGame({ paused, onStats, onEnd, onTogglePause, touch }: Props) {
+export function TetrisGame({ paused, onStats, onEnd, onTogglePause, touch, skinSlot }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Retro on the server. The saved skin is read on the client.
@@ -125,7 +128,8 @@ export function TetrisGame({ paused, onStats, onEnd, onTogglePause, touch }: Pro
       const tLeft = t.takePress('left');
       const tRight = t.takePress('right');
       const tRotate = t.takePress('up');
-      const tDrop = t.takePress('action');
+      const tDrop = t.takePress('b');
+      const tA = t.takePress('a');
       const downPressed = t.takePress('down');
       const downHeld = t.held().has('down');
       downAcc = downHeld ? downAcc + dt : 0;
@@ -139,7 +143,7 @@ export function TetrisGame({ paused, onStats, onEnd, onTogglePause, touch }: Pro
         {
           left: k.left || tLeft,
           right: k.right || tRight,
-          rotate: k.rotate || tRotate,
+          rotate: k.rotate || tRotate || tA,
           softDrop: k.softDrop || tSoft,
           hardDrop: k.hardDrop || tDrop,
         },
@@ -178,6 +182,36 @@ export function TetrisGame({ paused, onStats, onEnd, onTogglePause, touch }: Pro
   }
 
   // Fills the parent (the CRT screen arena). The canvas keeps its 420 by 600 ratio inside it.
+  // The SKIN select. Inline in the game screen, or in the phone bottom bar through skinSlot.
+  const skinField = (
+    <div
+      className="field"
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 12, margin: 0 }}
+    >
+      <label htmlFor="tetris-skin">SKIN</label>
+      <select
+        id="tetris-skin"
+        value={skin}
+        onChange={handleSkinChange}
+        style={{
+          height: 32,
+          background: 'var(--bg)',
+          color: 'var(--ink)',
+          border: '1px solid var(--line)',
+          padding: '0 8px',
+          fontFamily: 'var(--mono)',
+          fontSize: 12,
+        }}
+      >
+        {SKIN_IDS.map((id) => (
+          <option key={id} value={id}>
+            {SKINS[id].label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+
   return (
     <div
       style={{
@@ -207,32 +241,7 @@ export function TetrisGame({ paused, onStats, onEnd, onTogglePause, touch }: Pro
         }}
       />
 
-      <div
-        className="field"
-        style={{ flexDirection: 'row', alignItems: 'center', gap: 12, margin: 0 }}
-      >
-        <label htmlFor="tetris-skin">SKIN</label>
-        <select
-          id="tetris-skin"
-          value={skin}
-          onChange={handleSkinChange}
-          style={{
-            height: 32,
-            background: 'var(--bg)',
-            color: 'var(--ink)',
-            border: '1px solid var(--line)',
-            padding: '0 8px',
-            fontFamily: 'var(--mono)',
-            fontSize: 12,
-          }}
-        >
-          {SKIN_IDS.map((id) => (
-            <option key={id} value={id}>
-              {SKINS[id].label}
-            </option>
-          ))}
-        </select>
-      </div>
+      {skinSlot ? createPortal(skinField, skinSlot) : skinField}
     </div>
   );
 }

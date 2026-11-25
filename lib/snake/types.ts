@@ -20,4 +20,4 @@ export type SnakeState = {
   acc: number; // seconds since the last step
 };
 
-export type SnakeInput = { turn: Dir | null }; // at most one turn press per frame
+export type SnakeInput = { turn: Dir | null; boost?: boolean }; // at most one turn press per frame

@@ -1,7 +1,7 @@
 // Touch state for the on-screen D-pad. Pure: no DOM, React, or Next imports.
 // The D-pad component calls press and release; each game reads held() and takePress() once per frame.
 
-export type TouchKey = 'up' | 'down' | 'left' | 'right' | 'action';
+export type TouchKey = 'up' | 'down' | 'left' | 'right' | 'a' | 'b';
 
 export type TouchControls = {
   // Keys held down right now (pointer is still on the button).

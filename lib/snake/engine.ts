@@ -2,6 +2,7 @@
 
 import {
   COLS,
+  BOOST_MULT,
   DT_MAX,
   FRUIT_KINDS,
   FRUITS_PER_LEVEL,
@@ -98,7 +99,7 @@ export function step(
     }
   }
 
-  const clamped = Math.max(0, Math.min(dt, DT_MAX));
+  const clamped = Math.max(0, Math.min(dt, DT_MAX)) * (input.boost ? BOOST_MULT : 1);
   let cur: SnakeState = { ...state, queued, acc: state.acc + clamped };
   while (cur.status === 'playing' && cur.acc >= cur.stepInterval) {
     cur = moveOnce(cur, rng);
