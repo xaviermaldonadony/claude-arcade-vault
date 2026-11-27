@@ -28,6 +28,7 @@ Project skills live in `.claude/skills/` and are pinned in `skills-lock.json`:
 - `/frontend-design` (from `anthropics/skills`): always use it to design the UI.
 - `/spec` and `/spec-impl` (from `Klerith/fernando-skills`): write a spec, then implement from it. See the spec-driven workflow below.
 - `/arcade-game-spec` (project-local, manual invocation only): specs a new playable game with a Supabase leaderboard from a `references/started-games/NN-name` folder or a game idea. It runs the `/spec` flow with game context preloaded and writes the spec only. Implement with `/spec-impl`.
+- `/spec-impl-game <NN-spec-name>` (project-local, manual invocation only): runs `/spec-impl` on an approved game spec, then runs the `skin-designer` agent, then the `mobile-porter` agent, one after the other (never in parallel). It stops before the agents if `/spec-impl` did not finish all steps.
 
 ## Agents
 
