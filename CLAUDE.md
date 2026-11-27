@@ -37,6 +37,10 @@ Project subagents live in `.claude/agents/`:
   - Tracks games in `references/game-suggestions-todo.md` (Suggested, Accepted, Implemented, Discarded). Never re-suggests a listed game.
   - Memory: `.claude/agent-memory/game-planner/`.
   - Edits only the todo file and its memory. Specs go through `/arcade-game-spec`, then `/spec-impl`.
+- `mobile-porter` (`.claude/agents/mobile-porter.md`): ports a newly added game to phones. Use it only after a new game is added, never for the existing four.
+  - Reuses `lib/touch/` and the touch components. Phone-only code is gated on `(pointer: coarse)`.
+  - Memory: `.claude/agent-memory/mobile-porter/`.
+  - Edits only the new game's files and its entry in the shared touch layout. Larger changes go through `/spec`.
 
 ## Tooling and hooks
 
