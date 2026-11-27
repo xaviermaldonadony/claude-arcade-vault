@@ -3249,3 +3249,13 @@ body.av-play-touch .player-hud .hud-actions .btn {
   padding: 6px 10px;
   font-size: 8px;
 }
+
+/* Reduced motion for the phone controls (SPEC 11). Kept at the end so it overrides the rules above. */
+@media (prefers-reduced-motion: reduce) {
+  .touch-hub-gem {
+    animation: none;
+  }
+  .touch-ring {
+    transition: none;
+  }
+}
