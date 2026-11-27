@@ -3250,6 +3250,15 @@ body.av-play-touch .player-hud .hud-actions .btn {
   font-size: 8px;
 }
 
+/* Game-over modal: lock background scroll while open, so a drag on the overlay does not move the page. */
+body.av-modal-open {
+  overflow: hidden !important;
+}
+.modal-bd {
+  touch-action: none;
+  overscroll-behavior: contain;
+}
+
 /* Reduced motion for the phone controls (SPEC 11). Kept at the end so it overrides the rules above. */
 @media (prefers-reduced-motion: reduce) {
   .touch-hub-gem {
