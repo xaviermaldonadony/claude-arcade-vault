@@ -15,7 +15,13 @@ const LAYOUT: Record<GameId, { enabled: TouchKey[]; a: string | null; b: string 
   snake: { enabled: ['up', 'down', 'left', 'right', 'a'], a: 'BOOST', b: null },
 };
 
-const ARROWS: Record<Dir, string> = { up: '▲', down: '▼', left: '◀', right: '▶' };
+// Arrow triangles from the Gamepad MK-II reference (references/game-pad-assets/gamepad.html).
+const ARROW_PATHS: Record<Dir, string> = {
+  up: 'M12 4 L20 16 L4 16 Z',
+  right: 'M8 4 L20 12 L8 20 Z',
+  down: 'M4 8 L20 8 L12 20 Z',
+  left: 'M16 4 L16 20 L4 12 Z',
+};
 const DIR_ORDER: Dir[] = ['up', 'left', 'right', 'down'];
 
 export function TouchDpad({ game, controls }: { game: string; controls: TouchControls }) {
@@ -47,7 +53,9 @@ export function TouchDpad({ game, controls }: { game: string; controls: TouchCon
         disabled={!on}
         {...(on ? bind(dir) : {})}
       >
-        {ARROWS[dir]}
+        <svg className="touch-arrow" viewBox="0 0 24 24" aria-hidden="true">
+          <path d={ARROW_PATHS[dir]} fill="currentColor" />
+        </svg>
       </button>
     );
   };
@@ -62,17 +70,25 @@ export function TouchDpad({ game, controls }: { game: string; controls: TouchCon
         disabled={!on}
         {...(on ? bind(key) : {})}
       >
-        {key.toUpperCase()}
+        <span className="touch-ring" aria-hidden="true" />
+        <span className="touch-letter">{key.toUpperCase()}</span>
       </button>
     );
   };
 
   return (
     <div className="touch-controls" role="group" aria-label="Touch controls">
-      <div className="touch-dpad-pad">{DIR_ORDER.map(dirButton)}</div>
-      <div className="touch-ab">
-        {roundButton('b', layout.b)}
-        {roundButton('a', layout.a)}
+      <div className="touch-shell">
+        <div className="touch-dpad-pad">
+          {DIR_ORDER.map(dirButton)}
+          <div className="touch-hub" aria-hidden="true">
+            <span className="touch-hub-gem" />
+          </div>
+        </div>
+        <div className="touch-ab">
+          {roundButton('b', layout.b)}
+          {roundButton('a', layout.a)}
+        </div>
       </div>
     </div>
   );
