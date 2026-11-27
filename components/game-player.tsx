@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '@/components/auth-provider';
 import { TouchBar } from '@/components/touch-bar';
 import { TouchDpad } from '@/components/touch-dpad';
@@ -57,6 +58,8 @@ export function GamePlayer({ game }: { game: Game }) {
   const [nameDraft, setNameDraft] = useState<string | null>(null);
 
   const name = nameDraft ?? user?.name ?? 'GUEST';
+  // The name field starts empty (placeholder shows), so typing is not appended to a prefilled value.
+  const nameInput = nameDraft ?? user?.name ?? '';
   const slot = isRealGame ? realSlot : FAKE_SLOT;
   // Fake games: level follows the score, one level every 2500 points.
   const level = isRealGame ? realLevel : 1 + Math.floor(score / 2500);
@@ -93,6 +96,13 @@ export function GamePlayer({ game }: { game: Game }) {
     setSaveStatus('idle');
   };
 
+  // Lock background scroll while the game-over modal is open, so a drag on the overlay does not move the page.
+  useEffect(() => {
+    if (!over) return;
+    document.body.classList.add('av-modal-open');
+    return () => document.body.classList.remove('av-modal-open');
+  }, [over]);
+
   // Sends the score once per click. The button is disabled while the request is open.
   const submitScore = async () => {
     setSaveStatus('saving');
@@ -100,7 +110,7 @@ export function GamePlayer({ game }: { game: Game }) {
       const res = await fetch('/api/scores', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ game: game.id, name: name.trim() || 'GUEST', score }),
+        body: JSON.stringify({ game: game.id, name: nameInput.trim() || 'GUEST', score }),
         cache: 'no-store',
       });
       setSaveStatus(res.status === 201 ? 'saved' : 'error');
@@ -208,55 +218,57 @@ export function GamePlayer({ game }: { game: Game }) {
         />
       )}
 
-      {over && (
-        <div className="modal-bd">
-          <div className="modal">
-            <h2>GAME OVER</h2>
-            <div className="final-label">FINAL SCORE</div>
-            <div className="final">{score.toLocaleString('en-US')}</div>
-            {!isRealGame ? (
-              <div>NOT RANKED YET</div>
-            ) : saveStatus === 'saved' ? (
-              <div>SCORE SAVED</div>
-            ) : (
-              <>
-                <div className="input-row">
-                  <input
-                    value={name}
-                    onChange={(e) =>
-                      setNameDraft(e.target.value.toUpperCase().slice(0, MAX_NAME_LENGTH))
-                    }
-                    placeholder="YOUR INITIALS"
-                    aria-label="Player name"
-                    disabled={saveStatus === 'saving'}
-                  />
-                  <button
-                    type="button"
-                    className="btn yellow"
-                    disabled={saveStatus === 'saving'}
-                    onClick={submitScore}
-                  >
-                    {saveStatus === 'saving' ? 'SAVING' : 'SAVE SCORE'}
-                  </button>
-                </div>
-                {saveStatus === 'error' && (
-                  <div style={{ color: 'var(--magenta)', marginTop: 10 }}>
-                    COULD NOT SAVE. TRY AGAIN
+      {over &&
+        createPortal(
+          <div className="modal-bd">
+            <div className="modal">
+              <h2>GAME OVER</h2>
+              <div className="final-label">FINAL SCORE</div>
+              <div className="final">{score.toLocaleString('en-US')}</div>
+              {!isRealGame ? (
+                <div>NOT RANKED YET</div>
+              ) : saveStatus === 'saved' ? (
+                <div>SCORE SAVED</div>
+              ) : (
+                <>
+                  <div className="input-row">
+                    <input
+                      value={nameInput}
+                      onChange={(e) =>
+                        setNameDraft(e.target.value.toUpperCase().slice(0, MAX_NAME_LENGTH))
+                      }
+                      placeholder="YOUR INITIALS"
+                      aria-label="Player name"
+                      disabled={saveStatus === 'saving'}
+                    />
+                    <button
+                      type="button"
+                      className="btn yellow"
+                      disabled={saveStatus === 'saving'}
+                      onClick={submitScore}
+                    >
+                      {saveStatus === 'saving' ? 'SAVING' : 'SAVE SCORE'}
+                    </button>
                   </div>
-                )}
-              </>
-            )}
-            <div className="actions">
-              <button type="button" className="btn" onClick={restart}>
-                PLAY AGAIN
-              </button>
-              <Link href="/" className="btn magenta">
-                BACK TO THE VAULT
-              </Link>
+                  {saveStatus === 'error' && (
+                    <div style={{ color: 'var(--magenta)', marginTop: 10 }}>
+                      COULD NOT SAVE. TRY AGAIN
+                    </div>
+                  )}
+                </>
+              )}
+              <div className="actions">
+                <button type="button" className="btn" onClick={restart}>
+                  PLAY AGAIN
+                </button>
+                <Link href="/" className="btn magenta">
+                  BACK TO THE VAULT
+                </Link>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
