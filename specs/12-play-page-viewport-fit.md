@@ -1,6 +1,6 @@
 # SPEC 12 — Play page fits the laptop screen
 
-> **Status:** Draft
+> **Status:** Implemented
 > **Kind:** shared
 > **Depends on:** SPEC 01 (player shell), SPEC 10 (phone layout)
 > **Date:** 2026-11-28
