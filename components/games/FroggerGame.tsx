@@ -2,8 +2,8 @@
 
 import { useEffect, useRef } from 'react';
 
-// SPEC frogger-core (specs/game-jam/frogger/01-frogger-core.md), steps 2-4: constants, types, lane map,
-// game loop, drawing and props. Death, goal, scoring and round logic are added in later steps.
+// SPEC frogger-core (specs/game-jam/frogger/01-frogger-core.md), steps 2-5: constants, types, lane map,
+// game loop, drawing, props, and collision/support detection. Death, goal, scoring and round logic are added in later steps.
 
 const COLS = 16;
 const ROWS = 14;
@@ -181,7 +181,8 @@ function createState(): GameState {
 
 // Returns the target cell for a one-cell hop, or null when it would leave the board.
 function hopTarget(frog: Frog, dir: Direction): { col: number; row: number } | null {
-  let col = frog.col;
+  // frog.col can be fractional while riding a log, so hop from the nearest cell.
+  let col = Math.round(frog.col);
   let row = frog.row;
   if (dir === 'up') row -= 1;
   else if (dir === 'down') row += 1;
@@ -227,8 +228,54 @@ function updateState(s: GameState, dt: number) {
     s.pendingDir = null;
   }
 
+  // Riding: a resting frog on the river moves with the entity under it.
+  if (!f.animating && isRiverRow(f.row)) {
+    const support = getSupport(f, s.lanes);
+    if (support) f.col += (support.lane.speed * support.lane.dir * dt) / 16 / CELL;
+  }
+
   // Round timer. Reaching 0 causes death in a later step.
   s.timeLeft = Math.max(0, s.timeLeft - dt);
+}
+
+// ----- Step 5: collision and support detection -----
+
+function isRiverRow(row: number): boolean {
+  return row >= ROW_RIVER_TOP && row <= ROW_RIVER_BOT;
+}
+
+// True when a vehicle occupies the frog's cell on a road row.
+function checkRoadCollision(frog: Frog, lanes: Lane[]): boolean {
+  return lanes.some(
+    (lane) =>
+      lane.row === frog.row &&
+      lane.row >= ROW_ROAD_TOP &&
+      lane.row <= ROW_ROAD_BOT &&
+      lane.entities.some((e) => frog.col >= e.col && frog.col < e.col + e.width),
+  );
+}
+
+// The river lane entity under the frog's cell, or null. A submerged turtle gives no support.
+function getSupport(frog: Frog, lanes: Lane[]): { lane: Lane; entity: Entity } | null {
+  if (!isRiverRow(frog.row)) return null;
+  const lane = lanes.find((l) => l.row === frog.row);
+  if (!lane) return null;
+  const x = frog.col + 0.5; // frog centre, so a fractional position still resolves to one cell
+  const entity = lane.entities.find((e) => x >= e.col && x < e.col + e.width);
+  if (!entity) return null;
+  if (entity.type === 'turtle' && entity.submerged) return null;
+  return { lane, entity };
+}
+
+// On the goal row: 'reached' with the bay index, or 'death' when the frog misses a bay or enters a taken one.
+// Null when the frog is not on the goal row.
+type GoalResult = { kind: 'reached'; bay: number } | { kind: 'death' } | null;
+
+function checkGoal(frog: Frog, bays: boolean[]): GoalResult {
+  if (frog.row !== ROW_GOALS) return null;
+  const bay = BAY_COLS.findIndex(([a, b]) => frog.col >= a && frog.col <= b);
+  if (bay === -1 || bays[bay]) return { kind: 'death' };
+  return { kind: 'reached', bay };
 }
 
 // ----- Step 4: drawing -----
