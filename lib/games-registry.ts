@@ -5,7 +5,7 @@ import type { ComponentType } from 'react';
 import type { TouchControls } from '@/lib/touch/controls';
 import { ArkanoidGame } from '@/components/arkanoid-game';
 import { AsteroidsGame } from '@/components/asteroids-game';
-import { FroggerRealGame } from '@/components/games/FroggerGame';
+import { FroggerRealGame } from '@/components/frogger-game';
 import { SnakeGame } from '@/components/snake-game';
 import { TetrisGame } from '@/components/tetris-game';
 

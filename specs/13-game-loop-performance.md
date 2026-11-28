@@ -14,7 +14,7 @@ Frogger drops frames during play on a laptop. The other four real games use the 
 **In:**
 
 - A baseline measurement of frame rate for all five games on `/games/<id>/play`, at 1440x900, in desktop Chromium. The baseline is recorded in this spec before any code change.
-- Fixes in Frogger: `components/games/FroggerGame.tsx`, `lib/frogger/skins.ts`, and any Frogger render helpers that the measurement points to.
+- Fixes in Frogger: `components/frogger-game.tsx`, `lib/frogger/skins.ts`, and any Frogger render helpers that the measurement points to.
 - The same audit and fixes, only where measured, in the four other real games: `components/asteroids-game.tsx`, `components/tetris-game.tsx`, `components/arkanoid-game.tsx`, `components/snake-game.tsx`, and their render modules `lib/asteroids/render.ts`, `lib/tetris/render.ts`, `lib/arkanoid/render.ts`, `lib/snake/render.ts`.
 - Allowed kinds of change:
   - Draw less per frame: cache static layers or sprites on offscreen canvases, batch draw calls, skip off-screen work.
@@ -56,7 +56,7 @@ These rules apply to the baseline and to every re-measurement. They are the only
 ## Implementation plan
 
 1. **Baseline.** No code change. Run the measurement method for all five games. Record the numbers and the top 5 costs for each slow game in the "Measurements" section below. Save one screenshot per game to `.playwright-screenshots/` as the "before" reference. This step is complete when the table has all five rows filled in.
-2. **Frogger fixes.** Fix the costs found in step 1 for Frogger, in `components/games/FroggerGame.tsx` and `lib/frogger/skins.ts`. Keep the look. Within `FroggerRealGame`, replace the `stats` `useState` with a `useRef` that holds the latest score, level and lives. Call the parent `onStats` only when one of those values changes. Check in the profile that `onScoreChange`, `onLivesChange` and `onLevelChange` fire on events and not every frame. If they fire every frame, throttle them. Re-measure. Record the new numbers. Run `npx tsc --noEmit` and `npm run lint`. The game must still play after the step.
+2. **Frogger fixes.** Fix the costs found in step 1 for Frogger, in `components/frogger-game.tsx` and `lib/frogger/skins.ts`. Keep the look. Within `FroggerRealGame`, replace the `stats` `useState` with a `useRef` that holds the latest score, level and lives. Call the parent `onStats` only when one of those values changes. Check in the profile that `onScoreChange`, `onLivesChange` and `onLevelChange` fire on events and not every frame. If they fire every frame, throttle them. Re-measure. Record the new numbers. Run `npx tsc --noEmit` and `npm run lint`. The game must still play after the step.
 3. **Other four games.** For each of Asteroids, Tetris, Arkanoid and Snake, check the baseline row. If it passes the pass rule, make no change to that game. If it fails, fix the top measured costs in its component and render module only. These four components already keep their game state and callbacks in `useRef` and have no `useState`, so look for other per-frame costs there (drawing, allocations, `shadowBlur`). Re-measure after each game. The game must still play after each game's change.
 4. **Verify the look.** Save an "after" screenshot for each game that changed. Compare it with the "before" screenshot by eye. Record "same look" or the difference in the Measurements section.
 5. **Verify the build.** Run `npx tsc --noEmit`, `npm run lint`, and `npm run build`.
