@@ -57,11 +57,15 @@ Phone rules (`(pointer: coarse)`, `max-width: 620px`) are not changed.
 
 ## Acceptance criteria
 
-- [ ] Frogger at 1366x768: HUD, board and SKIN row visible without scrolling.
-- [ ] Asteroids, Tetris, Arkanoid and Snake pass the pass rule at 1366x768, 1440x900 and 1920x1080.
-- [ ] Frogger passes the pass rule at 1440x900 and 1920x1080.
-- [ ] Desktop at 1920x1080 looks the same as before (the cap is inactive when the window is tall enough).
-- [ ] Phone layout (390x844, touch) is unchanged.
+- [x] Frogger at 1366x768: HUD, board and SKIN row visible without scrolling.
+- [x] Asteroids, Tetris, Arkanoid and Snake pass the pass rule at 1366x768, 1440x900 and 1920x1080.
+- [x] Frogger passes the pass rule at 1440x900 and 1920x1080.
+- [x] Desktop at 1920x1080 looks the same as before (the cap is inactive when the window is tall enough). Checked by measurement: width stays at 1100px.
+- [x] Phone layout (390x844, touch) is unchanged. Checked in Chromium mobile emulation (`pointer: coarse`): no horizontal scroll, canvas inside the CRT screen, cap not applied. Not compared pixel by pixel.
+
+## Known gap (not in the pass rule)
+
+- At 1280x720, Asteroids, Arkanoid, Snake and Frogger scroll about 56px. Cause: at this width the player is 656px, so the HUD wraps to two rows (130px tall instead of 73px). Tetris fits at 1280x720. Fix not made: the pass rule does not cover 1280x720. Options: a smaller HUD or fewer buttons at this width, or a larger `--play-chrome`.
 
 ## Decisions
 
