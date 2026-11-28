@@ -5,7 +5,7 @@ metadata:
   type: project
 ---
 
-Frogger skins: classic, neo, retro. Palettes in `lib/frogger/skins.ts` (no `lib/frogger/render.ts`, drawing stays in `components/games/FroggerGame.tsx`). The SKIN select lives in `FroggerRealGame` and persists under `frogger-skin`. Default is classic.
+Frogger skins: classic, neo, retro. Palettes in `lib/frogger/skins.ts` (no `lib/frogger/render.ts`, drawing stays in `components/frogger-game.tsx`). The SKIN select lives in `FroggerRealGame` and persists under `frogger-skin`. Default is classic.
 
 Audit before work: one hardcoded look, no skin data, no SKIN select, no `skinSlot` prop on `FroggerRealGame`. Classic kept as the original look. Only change: logs lightened from #7a4a1e to #a0683a, because the old brown was 1.9:1 against the river.
 

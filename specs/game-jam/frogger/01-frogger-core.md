@@ -12,7 +12,7 @@
 **In:**
 
 - SQL INSERT to add the `frogger` row to the `games` table in Supabase.
-- Create `components/games/FroggerGame.tsx` — a `"use client"` React component wrapping the main canvas (480 × 640 px). Accepts props: `paused`, `onScoreChange`, `onLivesChange`, `onLevelChange`, `onGameOver`.
+- Create `components/frogger-game.tsx` — a `"use client"` React component wrapping the main canvas (480 × 640 px). Accepts props: `paused`, `onScoreChange`, `onLivesChange`, `onLevelChange`, `onGameOver`.
 - Game loop built from scratch in the component: 16 columns × 14 rows grid of 40 × 40 px cells. The vertical map is divided into three fixed zones: bottom safe zone (row 13 — starting base), road zone (rows 12–8, 5 traffic lanes), river zone (rows 7–2, 6 river lanes), and goal zone (row 1, 5 target bays).
 - Road entities: cars and trucks of varying lengths (1–3 cells), speeds, and directions per lane; they move horizontally in a continuous loop; collision with the frog is lethal.
 - River entities: logs (2–4 cells long) and turtles (groups of 2–3) per lane; they move horizontally. The frog only survives in the river if it is on top of a log or visible turtles; if it falls into the water, it dies. Turtles can submerge periodically (visible phase → underwater → visible); while underwater they do not provide support.

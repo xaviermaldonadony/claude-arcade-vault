@@ -1,4 +1,4 @@
-// Skins for the Frogger canvas. Palettes only: the drawing lives in components/games/FroggerGame.tsx.
+// Skins for the Frogger canvas. Palettes only: the drawing lives in components/frogger-game.tsx.
 // No React or Next imports. Classic is the original look, so default players see no change.
 
 export const SKIN_IDS = ['classic', 'neo', 'retro'] as const;
