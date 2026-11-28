@@ -674,11 +674,18 @@ export function FroggerGame(props: FroggerGameProps) {
       last = now;
 
       if (!pausedRef.current && !s.over) {
-        // A D-pad press is queued like a key press. Last one wins.
+        // A D-pad tap is queued like a key press. Last one wins.
+        // A held D-pad direction repeats one hop after each landing, like held arrow keys.
         const touch = callbacksRef.current.touch;
         if (touch) {
-          for (const dir of ['up', 'down', 'left', 'right'] as const) {
+          const dirs = ['up', 'down', 'left', 'right'] as const;
+          for (const dir of dirs) {
             if (touch.takePress(dir)) s.pendingDir = dir;
+          }
+          if (!s.pendingDir) {
+            const held = touch.held();
+            const repeat = dirs.find((dir) => held.has(dir));
+            if (repeat) s.pendingDir = repeat;
           }
         }
         updateState(s, dt);
