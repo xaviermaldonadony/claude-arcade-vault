@@ -54,8 +54,12 @@ function drawSnake(ctx: CanvasRenderingContext2D, state: SnakeState, skin: Skin)
     const px = c.x * CELL + inset;
     const py = c.y * CELL + inset;
     if (skin.glow > 0) {
-      ctx.shadowColor = color;
-      ctx.shadowBlur = skin.glow;
+      // Pre-rendered glow for this colour, drawn under the block. Same order as the old per-block shadow.
+      const glow = glowSprite(color, skin.glow);
+      if (glow) {
+        const margin = glowMargin(skin.glow);
+        ctx.drawImage(glow, px - margin, py - margin);
+      }
     }
     ctx.fillStyle = color;
     ctx.fillRect(px, py, size, size);
@@ -121,8 +125,8 @@ function drawFruit(
   ctx.restore();
 }
 
-// Scratch canvas for the one-color fruit silhouette. Reused, so no allocation per frame beyond resize.
-let tintCanvas: HTMLCanvasElement | null = null;
+// Tinted fruit silhouettes, one per sprite and colour. Built once, then reused every frame.
+const tintCache = new Map<string, HTMLCanvasElement | null>();
 
 // Paints the sprite's shape in one color: draw the sprite, then fill only where it is opaque.
 // Returns null when no 2D context is available, and the caller draws the full-color sprite.
@@ -131,15 +135,54 @@ function tintSprite(
   sprite: FruitSprite,
   color: string,
 ): HTMLCanvasElement | null {
-  if (!tintCanvas) tintCanvas = document.createElement('canvas');
-  tintCanvas.width = sprite.w;
-  tintCanvas.height = sprite.h;
-  const t = tintCanvas.getContext('2d');
-  if (!t) return null;
-  t.clearRect(0, 0, sprite.w, sprite.h);
+  const key = `${sprite.name}|${color}`;
+  const cached = tintCache.get(key);
+  if (cached !== undefined) return cached;
+  const canvas = document.createElement('canvas');
+  canvas.width = sprite.w;
+  canvas.height = sprite.h;
+  const t = canvas.getContext('2d');
+  if (!t) {
+    tintCache.set(key, null);
+    return null;
+  }
   t.drawImage(image, sprite.x, sprite.y, sprite.w, sprite.h, 0, 0, sprite.w, sprite.h);
   t.globalCompositeOperation = 'source-in';
   t.fillStyle = color;
   t.fillRect(0, 0, sprite.w, sprite.h);
-  return tintCanvas;
+  tintCache.set(key, canvas);
+  return canvas;
+}
+
+// Glow sprites: the blurred shadow of one block, pre-rendered per colour and blur.
+// The block is drawn off-canvas and only its shadow is shifted into view, so the sprite holds the glow alone.
+const GLOW_OFFSET = 4096;
+const glowCache = new Map<string, HTMLCanvasElement | null>();
+
+// Room around the block for the blur. The blur reaches about 1.5 x shadowBlur, so this keeps all of it.
+function glowMargin(glow: number): number {
+  return Math.ceil(glow * 1.5);
+}
+
+function glowSprite(color: string, glow: number): HTMLCanvasElement | null {
+  const key = `${color}|${glow}`;
+  const cached = glowCache.get(key);
+  if (cached !== undefined) return cached;
+  const margin = glowMargin(glow);
+  const size = CELL - 4;
+  const canvas = document.createElement('canvas');
+  canvas.width = size + margin * 2;
+  canvas.height = size + margin * 2;
+  const g = canvas.getContext('2d');
+  if (!g) {
+    glowCache.set(key, null);
+    return null;
+  }
+  g.shadowColor = color;
+  g.shadowBlur = glow;
+  g.shadowOffsetX = GLOW_OFFSET;
+  g.fillStyle = color;
+  g.fillRect(margin - GLOW_OFFSET, margin, size, size);
+  glowCache.set(key, canvas);
+  return canvas;
 }

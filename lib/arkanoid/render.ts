@@ -65,7 +65,45 @@ function sheetFor(sheet: HTMLImageElement, tint: SheetTint): CanvasImageSource {
   return canvas;
 }
 
+// Glow halos: only the shadow of one sprite, drawn once per source, sprite rect, size, blur and color.
+// The sprite is drawn off the halo canvas by HALO_OFFSET, so only its shadow lands inside it.
+// The halo has a margin of `glow` px on each side, so the blur is not cut off.
+const HALO_OFFSET = 4096;
+const glowHalos = new WeakMap<CanvasImageSource, Map<string, HTMLCanvasElement>>();
+
+function glowHalo(
+  source: CanvasImageSource,
+  s: SpriteRect,
+  w: number,
+  h: number,
+  glow: number,
+  glowColor: string,
+): HTMLCanvasElement {
+  let bySize = glowHalos.get(source);
+  if (!bySize) {
+    bySize = new Map();
+    glowHalos.set(source, bySize);
+  }
+  const key = `${glow}|${glowColor}|${s.sx},${s.sy},${s.sw},${s.sh}|${w}x${h}`;
+  let canvas = bySize.get(key);
+  if (!canvas) {
+    canvas = document.createElement('canvas');
+    canvas.width = Math.ceil(w + glow * 2);
+    canvas.height = Math.ceil(h + glow * 2);
+    const hc = canvas.getContext('2d');
+    if (hc) {
+      hc.shadowBlur = glow;
+      hc.shadowColor = glowColor;
+      hc.shadowOffsetX = HALO_OFFSET;
+      hc.drawImage(source, s.sx, s.sy, s.sw, s.sh, glow - HALO_OFFSET, glow, w, h);
+    }
+    bySize.set(key, canvas);
+  }
+  return canvas;
+}
+
 // Glow is a shadow in the given color. glow 0 draws flat.
+// The glow is a cached halo drawn under the sprite, the same pixels as a shadowBlur draw.
 function drawSprite(
   ctx: CanvasRenderingContext2D,
   source: CanvasImageSource,
@@ -75,12 +113,8 @@ function drawSprite(
   glowColor = '#000',
 ): void {
   if (glow > 0) {
-    ctx.save();
-    ctx.shadowBlur = glow;
-    ctx.shadowColor = glowColor;
-    ctx.drawImage(source, s.sx, s.sy, s.sw, s.sh, r.x, r.y, r.w, r.h);
-    ctx.restore();
-    return;
+    const halo = glowHalo(source, s, r.w, r.h, glow, glowColor);
+    ctx.drawImage(halo, r.x - glow, r.y - glow);
   }
   ctx.drawImage(source, s.sx, s.sy, s.sw, s.sh, r.x, r.y, r.w, r.h);
 }
