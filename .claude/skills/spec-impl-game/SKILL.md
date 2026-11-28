@@ -1,12 +1,12 @@
 ---
 name: spec-impl-game
-description: Implements an approved game spec with /spec-impl, then runs the skin-designer agent and then the mobile-porter agent, one after the other (never in parallel). Manual invocation only.
+description: Auto workflow for a game spec. Approved spec: implements it step by step, commits each step, then stops for the human acceptance check. Implemented spec: runs frontend-design, skin-designer and mobile-porter one after the other. Stops for decisions, failing checks or actions outside the repo. Manual invocation only.
 disable-model-invocation: true
 argument-hint: <NN-spec-name>
-allowed-tools: Read, Glob, Grep, Edit, Write, AskUserQuestion, Agent, Skill, Bash(git status:*), Bash(git branch:*), Bash(git checkout:*), Bash(git log:*), Bash(git diff:*), Bash(git stash:*), Bash(git add:*), Bash(git commit:*), Bash(git show:*), Bash(cat:*), Bash(ls:*), Bash(grep:*)
+allowed-tools: Read, Glob, Grep, Edit, Write, AskUserQuestion, Agent, Skill, Bash(git status:*), Bash(git branch:*), Bash(git checkout:*), Bash(git log:*), Bash(git diff:*), Bash(git add:*), Bash(git commit:*), Bash(git show:*), Bash(cat:*), Bash(ls:*), Bash(grep:*), Bash(npx tsc:*), Bash(npx eslint:*), Bash(npx prettier:*)
 ---
 
-# /spec-impl-game — Implement a game spec, then skin it and port it to phones
+# /spec-impl-game — Auto workflow: implement a game spec, commit each step, skin it, port it
 
 ## Session context
 
@@ -24,42 +24,122 @@ Workflow config:
 
 ---
 
-This command wraps `/spec-impl` and adds two agent runs after it. **You do not write the game code yourself here.** `spec-impl` has `disable-model-invocation: true`, so you run its phases yourself by reading its file.
+This command runs the game workflow in two phases, with a human check between them:
+
+1. **Implementation (auto):** implements the spec step by step and commits each step. It does not stop between steps.
+2. **Human acceptance:** the user verifies the spec's acceptance criteria and sets the spec state to `Implemented`.
+3. **Agents (auto):** after the state is `Implemented`, runs `frontend-design`, `skin-designer` and `mobile-porter` one after the other.
+
+The command never sets the state to `Implemented` itself. Only the user does.
 
 The received argument is: `$ARGUMENTS`
 
+**Run mode: auto.** The user invoked this command to run the full flow, so the start confirmation is given. This overrides these `/spec-impl` rules for this run only:
+
+- Phase 4 start confirmation and the pause after each step are skipped.
+- Commits are made by this command after every step (see Commit rules below), not by `/spec-impl`. Leave `AutoCommitSteps` as it is in the config, so `/spec-impl` does not commit a second time.
+
+Everything else in `/spec-impl` stays binding: the Approved check, branch creation, the working-tree question, no pushes, no `--no-verify`, and no improvised answers to ambiguity.
+
 ---
 
-## Step 1 — Run /spec-impl
+## Stop rules (the only reasons to pause for the user)
 
-Read `.claude/skills/spec-impl/SKILL.md` and treat it as binding for the implementation flow. Follow its four phases in strict order, unchanged: approval check, branch, spec summary, step-by-step implementation with pauses. Pass `$ARGUMENTS` through as the spec argument. Do not change its rules (no commits unless `AutoCommitSteps` is `true`, no pushes, no `--no-verify`, no improvised ambiguity answers).
+Stop, show the problem, and ask with AskUserQuestion when any of these happens:
 
-Do not skip any pause that `spec-impl` requires. Wait for the user at each one.
+1. The spec state is neither `Approved` nor `Implemented`, or the working tree has pending changes (the `/spec-impl` Phase 3 question).
+2. The spec is `Implemented` but the current branch is not `spec-NN-slug`, or a step commit is missing. Do not launch agents.
+3. The spec has an ambiguity that the spec does not resolve (`/spec-impl` rule). Give 2 or 3 options.
+4. A step's check fails after 2 fix attempts (see Quality gate).
+5. A step needs an action outside the repo: a remote database change, a push, a pull request, an external service, or a manual check (for example a Supabase SQL run or a browser check that you cannot do).
+6. The game id is unclear or not in `REAL_GAMES` (`lib/games-registry.ts`).
+7. A requested change is out of the spec's scope.
+8. `frontend-design`, `skin-designer` or `mobile-porter` stops and asks a question.
 
-## Step 2 — Gate before the agents
+Do not stop for anything else. In particular, do not stop to show a diff and wait, and do not stop to ask whether to continue to the next step.
 
-Continue to Step 3 **only** when `spec-impl` ended with its final message ("All steps of the plan are implemented"). If `spec-impl` stopped for any other reason (spec not Approved, pending working tree changes not resolved, user paused, ambiguity open, step not confirmed), stop here and report where it stopped. **Do not launch any agent.**
+---
 
-## Step 3 — Resolve the game id
+## Step 0 — Read the spec state and choose the path
 
-The game id is the one `REAL_GAMES` in `lib/games-registry.ts` uses for this game. Get it from the spec header or slug, then confirm it with:
+1. Find the spec from `$ARGUMENTS` (full name, number, slug, or path such as `@specs/game-jam/frogger/01-frogger-core.md`). Read the `Status` line near the top (the blockquote `> **Status:** ...`).
+2. Choose the path by the state:
+   - **`Approved`** (or equivalent): run Step 1 (implementation). Then stop at Step 2 for the human check.
+   - **`Implemented`** (or equivalent): skip Step 1. Check that the current branch is `spec-NN-slug` and that step commits exist (`git log --oneline` shows `spec-NN step MM` for each plan step). If yes, go to Step 3 (the agents). If not, stop (rule 8).
+   - **Anything else** (Draft, In review, Obsolete, unknown): stop (rule 1).
+
+## Step 1 — Run /spec-impl in auto mode
+
+Read `.claude/skills/spec-impl/SKILL.md` and follow its phases in order, with the auto-mode overrides above:
+
+1. **Phase 1:** Find the spec (see Step 0).
+2. **Phase 2:** Check the state is `Approved`. Otherwise stop (rule 1).
+3. **Phase 3:** Check the working tree and create or switch to the branch `spec-NN-slug` (`AutoCreateBranch` rules). Show the spec summary (objective, scope, plan, criteria). Do not wait for confirmation.
+4. **Phase 4:** Implement each step of the plan in order. After each step: run the Quality gate, commit the step, and continue to the next step with no pause.
+
+## Quality gate (after every step, before its commit)
+
+1. Run `npx tsc --noEmit`. It must pass.
+2. Run `npx eslint <each file this step touched>`. Errors must be zero. Warnings are allowed only when they come from code that a later step of the same spec will use. Say so in the commit message.
+3. Run `npx prettier --write <each file this step touched>` if the hook did not already format it.
+4. If a check fails, fix it and run the check again. After 2 failed fix attempts, stop (rule 3).
+
+Do not use `--no-verify`. Do not bypass hooks.
+
+## Commit rules (per step)
+
+- Stage only the files this step created or changed: `git add -- <file> <file> ...`. Never `git add -A` or `git add .`.
+- Check `git diff --cached --stat` first. It must list only this step's files.
+- Commit message: a meaningful subject and a short body. Format:
+  - Subject: `feat: <what the step did> (spec-NN step MM)`, for example `feat: add frogger goal and bay handling (spec-01 step 6)`.
+  - Body: 1 to 3 lines on what changed and any open decision you made.
+  - Last line: `Co-Authored-By: Claude Haiku 5.5 <noreply@anthropic.com>`.
+- Use `git commit -m` with the message. Do not open an editor.
+- If the commit fails, stop and show the error (rule 4 style). Do not retry blindly.
+- Never push.
+
+After the commit, print one line: `Committed step MM as <short hash>`.
+
+## Step 2 — Human acceptance gate (hard stop)
+
+After Phase 4 finishes every step and all their commits exist, **stop**. Do not launch any agent. Print this and nothing that starts the agents:
+
+```
+✅ Implementation finished and committed on branch spec-NN-slug.
+
+Next, you check the spec:
+  1. Run the acceptance criteria in specs/.../NN-slug.md (browser, Supabase, manual checks).
+  2. Fix anything that fails: ask me to change code, then the change gets its own commit.
+  3. When all pass, set the spec state to "Implemented" and commit that change.
+  4. Re-run /spec-impl-game <NN-spec-name>. I will skip implementation and run the agents.
+```
+
+Also list the criteria that need a human (browser, Supabase, manual look), so the user knows what to check. Do not run the agents in the same turn, even if no browser check is pending.
+
+If the implementation stopped early (a stop rule fired), stop there and report where it stopped. The gate above applies only when every step is done.
+
+## Step 3 — Resolve the game id (agents phase, state `Implemented` only)
+
+Reached only from Step 0 when the state is `Implemented`. A run that implements the spec stops at Step 2 and never reaches this step.
+
+The game id is the one in `REAL_GAMES` (`lib/games-registry.ts`) for this game. Get it from the spec header or slug, then confirm it with:
 
 ```
 grep -n "REAL_GAMES" lib/games-registry.ts
 ```
 
-- If the id is clear and registered, continue.
-- If the id is unclear, or the game is not registered in `REAL_GAMES`, ask the user with AskUserQuestion. Do not guess. Do not register the game yourself.
+- Clear and registered: continue.
+- Unclear or not registered: stop and ask (rule 5). Do not guess. Do not register the game yourself.
 
 ## Step 4 — Design direction with /frontend-design
 
-Before any agent runs, invoke the `frontend-design` skill with the Skill tool (`skill: "frontend-design"`). Project rule: always use it to design the UI. Pass the game id and the spec path as args, and ask for a visual direction for the game's skins (`classic`, `neo`, `retro`) and its phone touch layout, on the dark theme, using the `--cyan`, `--magenta`, `--green`, `--yellow` accents from `app/arcade.css`.
+Invoke the `frontend-design` skill with the Skill tool (`skill: "frontend-design"`). Project rule: always use it to design the UI. Pass the game id and the spec path, and ask for a visual direction for the game's skins (`classic`, `neo`, `retro`) and its phone touch layout, on the dark theme, using the `--cyan`, `--magenta`, `--green`, `--yellow` accents from `app/arcade.css`.
 
-Keep its output (the design direction) as text. You will pass it to both agents in Steps 5 and 6. Do not write the design into any file yourself.
+Keep the output as text. Pass it to both agents in Steps 5 and 6. Do not write the design into a file yourself.
 
-If the Skill call fails or is unavailable, stop and tell the user. Do not launch the agents without the design direction.
+If the Skill call fails, stop and tell the user (rule 7 style). Do not launch the agents without it.
 
-## Step 5 — skin-designer (first, only after Step 4)
+## Step 5 — skin-designer (only after Step 4)
 
 Launch the agent with the Agent tool:
 
@@ -67,28 +147,39 @@ Launch the agent with the Agent tool:
 - Run in the foreground. Wait for it to finish.
 - Prompt: the game id, the spec path (`specs/...`), the design direction from Step 4, and this line: "Work only on this game. Ensure it has the `classic`, `neo`, and `retro` skins and that each reads well on the dark theme."
 
-When it returns, show the user a short summary: files changed and skins added or fixed. If it stopped and asked a question, relay the question and wait for the answer before continuing.
+When it returns:
 
-## Step 6 — mobile-porter (second, only after Step 5 returned)
+1. If it asked a question, stop and relay it (rule 7).
+2. Otherwise run the Quality gate on the files it changed.
+3. Commit them as `feat: add skins for <game> (spec-NN skin)` with the same body and co-author rules as the step commits.
+4. Print a short summary: files changed, skins added or fixed, and the commit hash.
 
-Only start this after the skin-designer call has returned and its summary is shown. Never send both Agent calls in the same message. Never run them in parallel.
+## Step 6 — mobile-porter (only after Step 5 is committed)
+
+Never send both Agent calls in the same message. Never run them in parallel.
 
 Launch the agent with the Agent tool:
 
 - `subagent_type`: `mobile-porter`
 - Run in the foreground. Wait for it to finish.
-- Prompt: the same game id, spec path, and design direction from Step 4, plus: "The skin-designer has already run. Port this game to phones per the touch layout. Do not change the four existing games."
+- Prompt: the same game id, spec path, and design direction from Step 4, plus: "The skin-designer has already run and its work is committed. Port this game to phones per the touch layout. Do not change the four existing games."
 
-When it returns, show the user a short summary of its changes. If it stopped and asked a question, relay it and wait.
+When it returns:
+
+1. If it asked a question, stop and relay it (rule 7).
+2. Otherwise run the Quality gate on the files it changed.
+3. Commit them as `feat: add phone controls for <game> (spec-NN mobile)` with the same body and co-author rules.
+4. Print a short summary: files changed and the commit hash.
 
 ## Step 7 — Final report
 
 Report, in this order:
 
-1. Result of `/spec-impl` (branch, steps done, commits if any).
+1. Result of `/spec-impl`: branch, steps done, and the commit for each step (short hash and subject).
 2. Design direction used (short).
-3. Files touched by skin-designer.
-4. Files touched by mobile-porter.
-5. Reminder: verify the spec's acceptance criteria one by one, then set the spec state to "Implemented" and make the final commit before merging.
+3. Commit and files from skin-designer.
+4. Commit and files from mobile-porter.
+5. Checks that still need a human: acceptance criteria that need a browser run, a Supabase action, or a manual look. List each one.
+6. Reminder: verify the acceptance criteria, then set the spec state to `Implemented` and commit that change.
 
-Do not commit, push, or open a PR unless the user asks.
+Do not push, open a PR, or merge unless the user asks.
