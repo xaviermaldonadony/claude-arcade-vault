@@ -1,5 +1,9 @@
 -- SPEC frogger-core (specs/game-jam/frogger/01-frogger-core.md), step 1: add the catalog row 'frogger'.
--- No schema, RLS or grant change.
+-- Widens the games.color check to allow 'lime' (the spec's color). Only the check constraint changes.
+
+alter table public.games drop constraint games_color_check;
+alter table public.games add constraint games_color_check
+  check (color in ('cyan', 'magenta', 'yellow', 'green', 'lime'));
 
 insert into public.games (id, title, short, long, cat, cover, color)
 values (
