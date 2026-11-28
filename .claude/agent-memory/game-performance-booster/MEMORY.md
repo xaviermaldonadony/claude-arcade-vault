@@ -1,0 +1,3 @@
+- [Asteroids performance](asteroids-performance.md) — all 3 skins pass rAF rule; neo glow ~0.9 ms/frame; no change made
+- [Snake performance](snake-performance.md) — all 3 skins pass rAF rule; neo per-block shadowBlur 2.5 to 0.74 ms via glow sprites; retro tint cached
+- [Arkanoid performance](arkanoid-performance.md) — neo shadowBlur failed (40.8 fps); cached glow halos fixed it (60 fps); microbench disagrees in-game
