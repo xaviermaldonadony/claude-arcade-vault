@@ -37,7 +37,7 @@ export function GamePlayer({ game }: { game: Game }) {
     document.body.classList.toggle('av-play-touch', on);
     return () => document.body.classList.remove('av-play-touch');
   }, [isRealGame, isCoarse]);
-  // Desktop real game play page: hide the footer so the page fits the window without scrolling (SPEC 12).
+  // Desktop real game play page: hide the footer so the page fits the window without scrolling.
   useEffect(() => {
     const on = isRealGame && !isCoarse;
     document.body.classList.toggle('av-play-fit', on);

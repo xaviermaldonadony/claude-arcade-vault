@@ -1,7 +1,7 @@
-# SPEC 13 — Game loop and render performance
+# SPEC 12 — Game loop and render performance
 
 > **Status:** Approved
-> **Depends on:** SPEC 05 (Asteroids), SPEC 07 (Tetris), SPEC 08 (Arkanoid), SPEC 09 (Snake), SPEC 12 (play page layout)
+> **Depends on:** SPEC 05 (Asteroids), SPEC 07 (Tetris), SPEC 08 (Arkanoid), SPEC 09 (Snake), play page layout (`.av-player` width cap in `app/arcade.css`)
 > **Date:** 2026-11-27
 > **Objective:** The five playable games (Frogger first, then Asteroids, Tetris, Arkanoid and Snake) reach a steady 60fps on a laptop play page, by fixing their game loops and drawing code, without changing game rules or the look.
 
@@ -30,7 +30,7 @@ Frogger drops frames during play on a laptop. The other four real games use the 
 - Changes to canvas logical sizes, skins, colors, sprites, or the visual design.
 - Phone performance (coarse pointer). This spec targets laptops only. Any phone work gets its own spec.
 - The touch controls: `lib/touch/`, `components/touch-dpad.tsx`, `components/touch-bar.tsx`.
-- The play page layout (SPEC 12) and `components/game-player.tsx`, unless a measured cost is in the shell and cannot be fixed in a game.
+- The play page layout (the `.av-player` width cap in `app/arcade.css`) and `components/game-player.tsx`, unless a measured cost is in the shell and cannot be fixed in a game.
 - The Games library, Home, Hall of Fame, About, and the Supabase data calls.
 - The six placeholder games that run the fake score ticker.
 - New dependencies, a test runner, or a performance library. Measurement uses the Playwright MCP tools and the browser's own APIs.
@@ -93,7 +93,7 @@ Baseline notes (step 1, production build from `next start` on port 3020, Playwri
 
 - [ ] The baseline table is filled in for all five games before any code change is committed.
 - [ ] Frogger passes the pass rule at 1440x900 on the production build.
-- [ ] Frogger passes the pass rule at 1366x768, the viewport from SPEC 12.
+- [ ] Frogger passes the pass rule at 1366x768, the desktop layout check of the `play-page-viewport` agent.
 - [ ] Each of Asteroids, Tetris, Arkanoid and Snake passes the pass rule at 1440x900, either from the baseline or after a fix recorded in the table.
 - [ ] No game shows console errors during the 10 second runs.
 - [ ] After a game is left (navigating to another page), its `requestAnimationFrame` loop stops. Checked by counting frame callbacks in `browser_evaluate` after navigation.

@@ -1059,7 +1059,7 @@ a.detail-cover:focus-visible {
   margin: 32px auto;
   padding: 0 24px 64px;
 }
-/* SPEC 12: desktop only. Cap the player width from the viewport height so the CRT, SKIN row and bottom bar fit without scrolling. */
+/* Desktop only. Cap the player width from the viewport height so the CRT, SKIN row and bottom bar fit without scrolling. */
 @media (pointer: fine) {
   .av-player {
     --play-chrome: 300px;
