@@ -1,6 +1,6 @@
 # SPEC — Frogger: Core Game Integration
 
-> **Status:** Approved
+> **Status:** Implemented
 > **Depends on:** 06-games-table-leaderboard-supabase
 > **Date:** 2026-05-20
 > **Objective:** Integrate Frogger (pure canvas, built from scratch) as a playable game in Arcade Vault with ID `frogger`, connecting score, lives, level, and game over with the React HUD and the dedicated play-page.
