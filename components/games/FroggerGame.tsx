@@ -1,7 +1,9 @@
 'use client';
 
-// SPEC frogger-core (specs/game-jam/frogger/01-frogger-core.md), steps 2-3: constants, local types, lane map.
-// The game loop, drawing and props are added in later steps.
+import { useEffect, useRef } from 'react';
+
+// SPEC frogger-core (specs/game-jam/frogger/01-frogger-core.md), steps 2-4: constants, types, lane map,
+// game loop, drawing and props. Death, goal, scoring and round logic are added in later steps.
 
 const COLS = 16;
 const ROWS = 14;
@@ -32,6 +34,7 @@ interface Entity {
   width: number;
   type: 'car' | 'truck' | 'log' | 'turtle';
   submerged?: boolean;
+  phase?: number; // turtle cycle offset in ms
 }
 
 interface Frog {
@@ -78,7 +81,7 @@ function fillLane(pattern: Pattern, startCol: number): Entity[] {
   while (col < COLS) {
     const width = pattern.widths[i % pattern.widths.length];
     const type = pattern.types[i % pattern.types.length];
-    entities.push({ col, width, type });
+    entities.push({ col, width, type, phase: i * 1100 });
     col += width + pattern.gap;
     i++;
   }
@@ -109,4 +112,386 @@ export function buildLanes(level: number): Lane[] {
   }
 
   return lanes;
+}
+
+// ----- Step 4: timing, state, loop -----
+
+const JUMP_MS = 120;
+const FROG_START_COL = 7;
+const BAY_COLS: [number, number][] = [
+  [1, 2],
+  [4, 5],
+  [7, 8],
+  [10, 11],
+  [13, 14],
+];
+const TURTLE_CYCLE_MS = 4500;
+const TURTLE_VISIBLE_MS = 3000; // visible, then 1500 ms underwater
+const ROUND_MS_BASE = 15000;
+const ROUND_MS_STEP = 1000; // 1 s less per level
+const ROUND_MS_MIN = 8000;
+const CAR_COLORS = ['#d62828', '#f7c600', '#2a6fdb'];
+
+function roundTime(level: number): number {
+  return Math.max(ROUND_MS_MIN, ROUND_MS_BASE - (level - 1) * ROUND_MS_STEP);
+}
+
+function isSubmerged(e: Entity, clock: number): boolean {
+  return (clock + (e.phase ?? 0)) % TURTLE_CYCLE_MS >= TURTLE_VISIBLE_MS;
+}
+
+interface GameState {
+  lanes: Lane[];
+  frog: Frog;
+  pendingDir: Direction | null;
+  timeLeft: number; // ms left in the round
+  clock: number; // ms since start, drives turtle cycles
+  score: number;
+  lives: number;
+  level: number;
+  bays: boolean[];
+  over: boolean;
+}
+
+function freshFrog(): Frog {
+  return {
+    col: FROG_START_COL,
+    row: ROW_START,
+    animating: false,
+    animT: 0,
+    targetCol: FROG_START_COL,
+    targetRow: ROW_START,
+  };
+}
+
+function createState(): GameState {
+  return {
+    lanes: buildLanes(1),
+    frog: freshFrog(),
+    pendingDir: null,
+    timeLeft: roundTime(1),
+    clock: 0,
+    score: 0,
+    lives: 3,
+    level: 1,
+    bays: BAY_COLS.map(() => false),
+    over: false,
+  };
+}
+
+// Returns the target cell for a one-cell hop, or null when it would leave the board.
+function hopTarget(frog: Frog, dir: Direction): { col: number; row: number } | null {
+  let col = frog.col;
+  let row = frog.row;
+  if (dir === 'up') row -= 1;
+  else if (dir === 'down') row += 1;
+  else if (dir === 'left') col -= 1;
+  else col += 1;
+  if (col < 0 || col >= COLS || row < 0 || row > ROW_START) return null;
+  return { col, row };
+}
+
+function updateState(s: GameState, dt: number) {
+  s.clock += dt;
+
+  // Lane entities: speeds are px/frame at 60 fps; positions are in cells.
+  for (const lane of s.lanes) {
+    const stepCells = (lane.speed * lane.dir * dt) / 16 / CELL;
+    for (const e of lane.entities) {
+      e.col += stepCells;
+      if (lane.dir === 1 && e.col >= COLS) e.col = -e.width;
+      else if (lane.dir === -1 && e.col + e.width <= 0) e.col = COLS;
+      if (e.type === 'turtle') e.submerged = isSubmerged(e, s.clock);
+    }
+  }
+
+  // Frog hop: 120 ms animation per cell, one queued direction at a time.
+  const f = s.frog;
+  if (f.animating) {
+    f.animT += dt;
+    if (f.animT >= JUMP_MS) {
+      f.col = f.targetCol;
+      f.row = f.targetRow;
+      f.animating = false;
+      f.animT = 0;
+    }
+  }
+  if (!f.animating && s.pendingDir) {
+    const target = hopTarget(f, s.pendingDir);
+    if (target) {
+      f.animating = true;
+      f.animT = 0;
+      f.targetCol = target.col;
+      f.targetRow = target.row;
+    }
+    s.pendingDir = null;
+  }
+
+  // Round timer. Reaching 0 causes death in a later step.
+  s.timeLeft = Math.max(0, s.timeLeft - dt);
+}
+
+// ----- Step 4: drawing -----
+
+function rowColor(row: number): string {
+  if (row === ROW_GOALS) return '#06140a';
+  if (row >= ROW_RIVER_TOP && row <= ROW_RIVER_BOT) return '#0a2a5c';
+  if (row === ROW_SAFE_MID || row === ROW_START) return '#0d3b1a';
+  return '#141414'; // road
+}
+
+function drawGoals(ctx: CanvasRenderingContext2D, s: GameState) {
+  BAY_COLS.forEach(([a, b], i) => {
+    const x = a * CELL;
+    const w = (b - a + 1) * CELL;
+    const y = 18;
+    const h = 16;
+    ctx.fillStyle = '#9be7a6';
+    ctx.fillRect(x + 2, y, w - 4, h);
+    ctx.strokeStyle = '#d4a017';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x + 2, y, w - 4, h);
+    if (s.bays[i]) {
+      ctx.fillStyle = '#1a7a2e';
+      ctx.beginPath();
+      ctx.ellipse(x + w / 2, y + h / 2, 12, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+}
+
+function drawEntity(ctx: CanvasRenderingContext2D, lane: Lane, e: Entity, index: number) {
+  const x = e.col * CELL;
+  const y = lane.row * CELL + 6;
+  const w = e.width * CELL;
+  const h = CELL - 12;
+
+  if (e.type === 'car') {
+    ctx.fillStyle = CAR_COLORS[index % CAR_COLORS.length];
+    ctx.fillRect(x + 3, y + 4, w - 6, h - 8);
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(x + 10, y + h - 2, 4, 0, Math.PI * 2);
+    ctx.arc(x + w - 10, y + h - 2, 4, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (e.type === 'truck') {
+    ctx.fillStyle = '#8a8f98';
+    ctx.fillRect(x + 3, y + 4, w - 6, h - 8);
+    const cabX = lane.dir === 1 ? x + w - 16 : x + 3;
+    ctx.fillStyle = '#4b4f57';
+    ctx.fillRect(cabX, y + 8, 13, h - 16);
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(x + 10, y + h - 2, 4, 0, Math.PI * 2);
+    ctx.arc(x + w - 10, y + h - 2, 4, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (e.type === 'log') {
+    ctx.fillStyle = '#7a4a1e';
+    ctx.fillRect(x + 2, y + 6, w - 4, h - 12);
+    ctx.strokeStyle = '#5c3513';
+    ctx.lineWidth = 2;
+    for (let lx = x + 10; lx < x + w - 4; lx += 12) {
+      ctx.beginPath();
+      ctx.moveTo(lx, y + 9);
+      ctx.lineTo(lx, y + h - 9);
+      ctx.stroke();
+    }
+  } else {
+    // Turtle group: one turtle per cell.
+    const cy = y + h / 2;
+    for (let c = 0; c < e.width; c++) {
+      const cx = x + c * CELL + CELL / 2;
+      if (e.submerged) {
+        ctx.strokeStyle = 'rgba(120, 220, 160, 0.35)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(cx, cy, (CELL - 14) / 2, 0, Math.PI * 2);
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = '#2e9e55';
+        ctx.beginPath();
+        ctx.arc(cx, cy, (CELL - 14) / 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#1e6b3a';
+        ctx.beginPath();
+        ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+}
+
+function drawFrog(ctx: CanvasRenderingContext2D, f: Frog) {
+  const t = f.animating ? Math.min(1, f.animT / JUMP_MS) : 0;
+  const col = f.col + (f.targetCol - f.col) * t;
+  const row = f.row + (f.targetRow - f.row) * t;
+  const cx = col * CELL + CELL / 2;
+  const cy = row * CELL + CELL / 2;
+
+  if (f.animating) {
+    ctx.strokeStyle = '#2e9e55';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(cx - 10, cy - 8);
+    ctx.lineTo(cx - 16, cy - 14);
+    ctx.moveTo(cx + 10, cy - 8);
+    ctx.lineTo(cx + 16, cy - 14);
+    ctx.moveTo(cx - 10, cy + 8);
+    ctx.lineTo(cx - 16, cy + 14);
+    ctx.moveTo(cx + 10, cy + 8);
+    ctx.lineTo(cx + 16, cy + 14);
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = '#7cff4f';
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, 14, 12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.arc(cx - 7, cy - 7, 4, 0, Math.PI * 2);
+  ctx.arc(cx + 7, cy - 7, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(cx - 7, cy - 7, 2, 0, Math.PI * 2);
+  ctx.arc(cx + 7, cy - 7, 2, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawHud(ctx: CanvasRenderingContext2D, s: GameState) {
+  ctx.font = '14px monospace';
+  ctx.fillStyle = '#fff';
+  ctx.textBaseline = 'alphabetic';
+
+  ctx.textAlign = 'left';
+  ctx.fillText(`SCORE ${s.score}`, 8, 15);
+
+  ctx.textAlign = 'center';
+  ctx.fillText(`LEVEL ${s.level}`, CANVAS_W / 2, 15);
+
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#7cff4f';
+  for (let i = 0; i < s.lives; i++) {
+    ctx.beginPath();
+    ctx.arc(CANVAS_W - 12 - i * 18, 10, 6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Time bar: bottom of row 0, below the bays.
+  const total = roundTime(s.level);
+  const frac = Math.max(0, Math.min(1, s.timeLeft / total));
+  ctx.fillStyle = frac > 0.5 ? '#3cff5a' : frac > 0.25 ? '#ffe14d' : '#ff4d4d';
+  ctx.fillRect(0, 36, CANVAS_W * frac, 4);
+}
+
+function drawState(ctx: CanvasRenderingContext2D, s: GameState) {
+  ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+  for (let row = 0; row < ROWS; row++) {
+    ctx.fillStyle = rowColor(row);
+    ctx.fillRect(0, row * CELL, CANVAS_W, CELL);
+  }
+  drawGoals(ctx, s);
+  for (const lane of s.lanes) {
+    lane.entities.forEach((e, i) => drawEntity(ctx, lane, e, i));
+  }
+  drawFrog(ctx, s.frog);
+  drawHud(ctx, s);
+}
+
+// ----- Step 4: React component -----
+
+export interface FroggerGameProps {
+  paused: boolean;
+  onScoreChange: (score: number) => void;
+  onLivesChange: (lives: number) => void;
+  onLevelChange: (level: number) => void;
+  onGameOver: (finalScore: number) => void;
+}
+
+const KEY_DIRS: Record<string, Direction> = {
+  ArrowUp: 'up',
+  ArrowDown: 'down',
+  ArrowLeft: 'left',
+  ArrowRight: 'right',
+};
+
+export function FroggerGame(props: FroggerGameProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const pausedRef = useRef(props.paused);
+  const callbacksRef = useRef(props);
+
+  useEffect(() => {
+    pausedRef.current = props.paused;
+    callbacksRef.current = props;
+  }, [props]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
+    canvas.width = CANVAS_W;
+    canvas.height = CANVAS_H;
+
+    const s = createState();
+    // Values last reported to the parent, so callbacks fire only on change.
+    const reported = { score: 0, lives: 3, level: 1 };
+
+    const onKey = (e: KeyboardEvent) => {
+      const dir = KEY_DIRS[e.key];
+      if (!dir) return;
+      e.preventDefault();
+      if (pausedRef.current || s.over) return;
+      s.pendingDir = dir;
+    };
+    document.addEventListener('keydown', onKey);
+
+    let raf = 0;
+    let last = 0;
+    const frame = (now: number) => {
+      const dt = last ? Math.min(50, now - last) : 16;
+      last = now;
+
+      if (!pausedRef.current && !s.over) updateState(s, dt);
+      drawState(ctx, s);
+
+      const cb = callbacksRef.current;
+      if (s.score !== reported.score) {
+        reported.score = s.score;
+        cb.onScoreChange(s.score);
+      }
+      if (s.lives !== reported.lives) {
+        reported.lives = s.lives;
+        cb.onLivesChange(s.lives);
+      }
+      if (s.level !== reported.level) {
+        reported.level = s.level;
+        cb.onLevelChange(s.level);
+      }
+
+      raf = requestAnimationFrame(frame);
+    };
+    raf = requestAnimationFrame(frame);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      aria-label="Frogger game board"
+      style={{
+        display: 'block',
+        width: '100%',
+        maxWidth: CANVAS_W,
+        height: 'auto',
+        aspectRatio: `${CANVAS_W} / ${CANVAS_H}`,
+        imageRendering: 'pixelated',
+      }}
+    />
+  );
 }
