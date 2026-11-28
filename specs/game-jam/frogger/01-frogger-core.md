@@ -3,7 +3,7 @@
 > **Status:** Implemented
 > **Depends on:** 06-games-table-leaderboard-supabase
 > **Date:** 2026-05-20
-> **Objective:** Integrate Frogger (pure canvas, built from scratch) as a playable game in Arcade Vault with ID `frogger`, connecting score, lives, level, and game over with the React HUD and the dedicated play-page.
+> **Objective:** Integrate Frogger (pure canvas, built from scratch) as a playable game in Arcade Vault with ID `frogger`, connecting score, lives, level, and game over with the React HUD and the shared game player (games registry).
 
 ---
 
@@ -25,7 +25,7 @@
 - Internal canvas HUD (score top-left, lives as frog icons top-right, level top-center, time bar in row 0) — dual HUD pattern matching the rest of the platform's games.
 - `paused: boolean` prop freezes `update()` while continuing to call `draw()`.
 - Clean up event listeners (`keydown` on `document`) in the `useEffect` `return`.
-- Create `app/games/frogger/play/page.tsx` — dedicated play-page.
+- Register Frogger in the games registry so it plays on the shared `/games/[id]/play` player (replaces a dedicated play page; see Changes after implementation).
 - Save score upon finishing: React modal pre-fills name from `localStorage` (`av_player_name`), inserts into Supabase, and persists the name for the next game.
 
 **Out of scope:**
@@ -167,7 +167,7 @@ No new tables or TypeScript types are introduced — `GameRow` and `ScoreRow` fr
    - If `lives === 0`: calls `onLivesChange(0)`, then `onGameOver(score)`, stops the loop.
    - If `lives > 0`: resets frog position to `ROW_START`, center column; resets timer.
 
-8. **Create `app/games/frogger/play/page.tsx`** — dedicated play-page:
+8. **Play page (superseded):** the steps below described a dedicated play page. Frogger now plays on the shared `/games/[id]/play` player through the registry. See Changes after implementation.
    - Imports `FroggerGame` with `dynamic(..., { ssr: false })`.
    - Local state: `score`, `lives` (initial `3`), `level`, `paused`, `over`, `name`, `saved`, `gameKey`.
    - Passes `paused` and the four callbacks to `FroggerGame`.
@@ -251,3 +251,14 @@ No new tables or TypeScript types are introduced — `GameRow` and `ScoreRow` fr
 - **No: RLS in this spec** — tables remain open (public INSERT and SELECT). Reason: mitigated in the future security spec.
 
 - **No: Realtime on leaderboards** — scores are visible on reload. Reason: subscription complexity adds no value while active player counts are low.
+
+---
+
+## Changes after implementation
+
+- **Route:** Frogger is registered in `REAL_GAMES` (`lib/games-registry.ts`) through `FroggerRealGame`. It plays on `/games/[id]/play`. No dedicated play page.
+- **Score save:** `POST /api/scores` with `{ game, name, score }`, the same path as the other games. The direct Supabase insert in the original steps did not match the `scores` columns.
+- **Difficulty:** road traffic at 70% of the speeds in step 3. Round timer starts at 25 s (was 15 s), minimum 15 s, minus 1 s per level.
+- **Skins:** `classic`, `neo` and `retro` in `lib/frogger/skins.ts`. SKIN select saves to `localStorage` key `frogger-skin`.
+- **Phones:** D-pad drives the frog. A tap hops once, a held direction repeats. A and B are off. The board keeps its 8:7 ratio in portrait.
+- **Card cover:** `.cover-frogger` in `app/arcade.css`.
