@@ -775,6 +775,45 @@ a {
   filter: drop-shadow(0 0 8px rgba(0, 255, 136, 0.5));
 }
 
+/* Frogger: goal bays, river with logs and turtles, safe row, road, start row. */
+.cover-frogger {
+  background: #141414;
+}
+.cover-frogger::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    /* goal row and bays */
+    linear-gradient(#06140a, #06140a) 0 0 / 100% 14% no-repeat,
+    linear-gradient(#9be7a6, #9be7a6) 8% 4% / 14% 6% no-repeat,
+    linear-gradient(#9be7a6, #9be7a6) 29% 4% / 14% 6% no-repeat,
+    linear-gradient(#9be7a6, #9be7a6) 50% 4% / 14% 6% no-repeat,
+    linear-gradient(#9be7a6, #9be7a6) 71% 4% / 14% 6% no-repeat,
+    linear-gradient(#9be7a6, #9be7a6) 92% 4% / 14% 6% no-repeat,
+    /* river */ linear-gradient(#0a2a5c, #0a2a5c) 0 14% / 100% 36% no-repeat,
+    /* logs */ linear-gradient(#7a4a1e, #7a4a1e) 4% 20% / 34% 8% no-repeat,
+    linear-gradient(#7a4a1e, #7a4a1e) 60% 20% / 30% 8% no-repeat,
+    linear-gradient(#7a4a1e, #7a4a1e) 14% 36% / 40% 8% no-repeat,
+    linear-gradient(#7a4a1e, #7a4a1e) 66% 36% / 26% 8% no-repeat,
+    /* turtles */ radial-gradient(circle, var(--green) 0 5px, transparent 6px) 52% 28% / 14px 14px
+      no-repeat,
+    radial-gradient(circle, var(--green) 0 5px, transparent 6px) 62% 28% / 14px 14px no-repeat,
+    radial-gradient(circle, var(--green) 0 5px, transparent 6px) 30% 44% / 14px 14px no-repeat,
+    radial-gradient(circle, var(--green) 0 5px, transparent 6px) 40% 44% / 14px 14px no-repeat,
+    /* safe row */ linear-gradient(#0d3b1a, #0d3b1a) 0 50% / 100% 8% no-repeat,
+    /* road */ linear-gradient(var(--magenta), var(--magenta)) 8% 60% / 16% 8% no-repeat,
+    linear-gradient(var(--yellow), var(--yellow)) 40% 60% / 10% 8% no-repeat,
+    linear-gradient(var(--cyan), var(--cyan)) 70% 60% / 14% 8% no-repeat,
+    linear-gradient(#8a8f98, #8a8f98) 18% 74% / 24% 8% no-repeat,
+    linear-gradient(#8a8f98, #8a8f98) 66% 74% / 24% 8% no-repeat,
+    linear-gradient(var(--yellow), var(--yellow)) 30% 88% / 10% 6% no-repeat,
+    linear-gradient(var(--magenta), var(--magenta)) 78% 88% / 12% 6% no-repeat,
+    /* start row and frog */ linear-gradient(#0d3b1a, #0d3b1a) 0 93% / 100% 7% no-repeat,
+    radial-gradient(circle, var(--green) 0 7px, transparent 8px) 50% 96% / 16px 16px no-repeat;
+  filter: drop-shadow(0 0 6px rgba(124, 255, 79, 0.5));
+}
+
 .cover-duel {
   background: #0a0a18;
 }
