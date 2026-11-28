@@ -1059,6 +1059,20 @@ a.detail-cover:focus-visible {
   margin: 32px auto;
   padding: 0 24px 64px;
 }
+/* SPEC 12: desktop only. Cap the player width from the viewport height so the CRT, SKIN row and bottom bar fit without scrolling. */
+@media (pointer: fine) {
+  .av-player {
+    --play-chrome: 300px;
+    max-width: min(1100px, max(480px, calc((100dvh - var(--play-chrome)) * 4 / 3 + 96px)));
+  }
+  /* Real game play page: no footer and no bottom padding, so the document is not taller than the window. */
+  body.av-play-fit .av-footer {
+    display: none;
+  }
+  body.av-play-fit .av-player {
+    padding-bottom: 0;
+  }
+}
 .player-hud {
   display: flex;
   gap: 16px;

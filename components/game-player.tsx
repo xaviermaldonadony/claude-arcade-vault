@@ -37,6 +37,12 @@ export function GamePlayer({ game }: { game: Game }) {
     document.body.classList.toggle('av-play-touch', on);
     return () => document.body.classList.remove('av-play-touch');
   }, [isRealGame, isCoarse]);
+  // Desktop real game play page: hide the footer so the page fits the window without scrolling (SPEC 12).
+  useEffect(() => {
+    const on = isRealGame && !isCoarse;
+    document.body.classList.toggle('av-play-fit', on);
+    return () => document.body.classList.remove('av-play-fit');
+  }, [isRealGame, isCoarse]);
   const [score, setScore] = useState(0);
   const [realSlot, setRealSlot] = useState<HudSlot>(INITIAL_SLOT);
   const [realLevel, setRealLevel] = useState(1);
