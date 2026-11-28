@@ -45,6 +45,9 @@ Project subagents live in `.claude/agents/`:
 - `play-page-viewport` (`.claude/agents/play-page-viewport.md`): checks one real game's play page against its layout pass rule (desktop 1366x768, 1440x900, 1920x1080 without scrolling; phone 390x844 canvas and touch bar), and fixes only that game's wrapper or canvas styles if it fails. Runs after `mobile-porter`.
   - Memory: `.claude/agent-memory/play-page-viewport/`.
   - Edits only the game's own files. Shared CSS (`app/arcade.css`) and `specs/` are never edited by it; a failure there stops the run.
+- `game-performance-booster` (`.claude/agents/game-performance-booster.md`): measures one real game's frame rate on its play page, chosen by slug (game id), against the SPEC 12 pass rule, and fixes only measured costs in that game's loop and render code. Measures every skin, including glow skins.
+  - Memory: `.claude/agent-memory/game-performance-booster/`.
+  - Edits only the game's own component and render files (plus `lib/frogger/skins.ts` for Frogger). Engines, touch files, `game-player.tsx`, `app/arcade.css` and `specs/` are never edited by it.
 
 ## Tooling and hooks
 
