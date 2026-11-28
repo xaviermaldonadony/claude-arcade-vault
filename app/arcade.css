@@ -3266,6 +3266,13 @@ body.av-play-touch .av-footer {
   display: none !important;
 }
 
+/* Frogger on phones: the board is 8:7 (640 x 560), so the 4:3 CRT frame would shrink it. Match the frame to the board (FroggerGame). */
+@media (pointer: coarse) and (orientation: portrait) {
+  body.av-play-touch .crt-screen:has(canvas[aria-label='Frogger game board']) {
+    aspect-ratio: 8 / 7;
+  }
+}
+
 /* Phones on a game play page: compact HUD so the controls fit on one screen (SPEC 10). */
 body.av-play-touch .av-player {
   margin: 8px auto 0;

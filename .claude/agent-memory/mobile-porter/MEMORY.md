@@ -1,0 +1,1 @@
+- [Frogger mobile port](frogger-mobile-port.md) — D-pad one-shot hops, A/B off, SKIN in bar, portrait CRT 8:7 override in arcade.css
