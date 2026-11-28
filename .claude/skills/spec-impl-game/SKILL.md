@@ -3,7 +3,7 @@ name: spec-impl-game
 description: Auto workflow for a game spec. Approved spec: implements it step by step, commits each step, then stops for the human acceptance check. Implemented spec: runs frontend-design, skin-designer and mobile-porter one after the other. Stops for decisions, failing checks or actions outside the repo. Manual invocation only.
 disable-model-invocation: true
 argument-hint: <NN-spec-name>
-allowed-tools: Read, Glob, Grep, Edit, Write, AskUserQuestion, Agent, Skill, Bash(git status:*), Bash(git branch:*), Bash(git checkout:*), Bash(git log:*), Bash(git diff:*), Bash(git add:*), Bash(git commit:*), Bash(git show:*), Bash(cat:*), Bash(ls:*), Bash(grep:*), Bash(npx tsc:*), Bash(npx eslint:*), Bash(npx prettier:*)
+allowed-tools: Read, Glob, Grep, Edit, Write, AskUserQuestion, Agent, Skill, Bash(git status:*), Bash(git branch:*), Bash(git checkout:*), Bash(git log:*), Bash(git diff:*), Bash(git add:*), Bash(git commit:*), Bash(git show:*), Bash(cat:*), Bash(ls:*), Bash(grep:*), Bash(npx tsc:*), Bash(npx eslint:*), Bash(npx prettier:*), Bash(npm run dev:*), Bash(pkill:*), Bash(curl:*), mcp__playwright__browser_navigate, mcp__playwright__browser_evaluate, mcp__playwright__browser_take_screenshot, mcp__playwright__browser_resize, mcp__playwright__browser_console_messages, mcp__playwright__browser_snapshot
 ---
 
 # /spec-impl-game — Auto workflow: implement a game spec, commit each step, skin it, port it
@@ -28,7 +28,9 @@ This command runs the game workflow in two phases, with a human check between th
 
 1. **Implementation (auto):** implements the spec step by step and commits each step. It does not stop between steps.
 2. **Human acceptance:** the user verifies the spec's acceptance criteria and sets the spec state to `Implemented`.
-3. **Agents (auto):** after the state is `Implemented`, runs `frontend-design`, `skin-designer` and `mobile-porter` one after the other.
+3. **Agents and layout (auto):** after the state is `Implemented`, runs `frontend-design`, `skin-designer` and `mobile-porter` one after the other (skipping any whose commit already exists), then implements SPEC 12 (layout fit) on the current branch if it is not yet done, and runs the layout check over every game.
+
+SPEC 12 is implemented on the same branch as the game, with no extra branch and no switching. The skill never sets SPEC 12 to `Implemented` unless the layout check passes.
 
 The command never sets the state to `Implemented` itself. Only the user does.
 
@@ -50,6 +52,7 @@ A new game is a real game, so it must follow the same pattern as Asteroids, Tetr
 3. **Touch layout:** add the game id and its enabled keys to `LAYOUT` in `components/touch-dpad.tsx`, and the id to `GameId`. Without it the D-pad has no layout.
 4. **Play route:** none new. `/games/[id]/play` serves every real game through `GamePlayer`.
 5. **Score save:** through `POST /api/scores`, the same as the other games.
+6. **Layout:** canvas sizing follows the shared flex pattern (`flex: 1 1 0; minHeight: 0; aspectRatio` in the wrapper). No fixed pixel heights, so the layout check in Step 6b can pass.
 
 If a spec's plan puts the game on a dedicated route or skips the registry, treat that as an ambiguity (rule 2). Show the options and ask before implementing.
 
@@ -67,6 +70,7 @@ Stop, show the problem, and ask with AskUserQuestion when any of these happens:
 6. The game id is unclear or not in `REAL_GAMES` (`lib/games-registry.ts`).
 7. A requested change is out of the spec's scope.
 8. `frontend-design`, `skin-designer` or `mobile-porter` stops and asks a question.
+9. SPEC 12 is missing, Draft or not `Approved`/`Implemented` when Step 6b is reached. Stop and ask the user to write and approve SPEC 12. Also stop when the layout check fails because of shared CSS (`app/arcade.css`), and report which viewport and game failed.
 
 Do not stop for anything else. In particular, do not stop to show a diff and wait, and do not stop to ask whether to continue to the next step.
 
@@ -154,6 +158,8 @@ If the Skill call fails, stop and tell the user (rule 7 style). Do not launch th
 
 ## Step 5 — skin-designer (only after Step 4)
 
+Resume check: if `git log --oneline` already has a commit tagged `(spec-NN skin)` for this spec, skip Steps 4 and 5 and go to Step 6. Print one line saying so.
+
 Launch the agent with the Agent tool:
 
 - `subagent_type`: `skin-designer`
@@ -168,6 +174,8 @@ When it returns:
 4. Print a short summary: files changed, skins added or fixed, and the commit hash.
 
 ## Step 6 — mobile-porter (only after Step 5 is committed)
+
+Resume check: if `git log --oneline` already has a commit tagged `(spec-NN mobile)` for this spec, skip this step and go to Step 6b. Print one line saying so.
 
 Never send both Agent calls in the same message. Never run them in parallel.
 
@@ -184,6 +192,20 @@ When it returns:
 3. Commit them as `feat: add phone controls for <game> (spec-NN mobile)` with the same body and co-author rules.
 4. Print a short summary: files changed and the commit hash.
 
+## Step 6b — Layout fit (SPEC 12), after mobile-porter
+
+1. **Read SPEC 12.** Open `specs/12-play-page-viewport-fit.md` and read its `Status` line.
+   - `Implemented`: skip to step 3.
+   - `Approved`: implement it with the Step 1 rules, but stay on the current branch (no branch creation, no switching). Run the Quality gate and commit each step as `feat: <what> (spec-12 step MM)`. Then go to step 3.
+   - Draft, missing or anything else: stop (rule 9).
+2. **Layout check.** Start the dev server in the background: `npm run dev`. For every id in `REAL_GAMES` (`lib/games-registry.ts`), open `http://localhost:3000/games/<id>/play` with the Playwright MCP tools at these viewports: 1366x768, 1440x900, 1920x1080 (fine pointer) and 390x844 (touch). Use the pass rule written in SPEC 12. If SPEC 12 does not state one, stop (rule 9).
+   - Desktop pass: the bottom of `.crt` is inside the viewport height, the canvas is fully visible, and there is no horizontal scroll.
+   - Phone pass: the canvas width fits the viewport, and the touch bar is visible.
+   - If one game fails because of its own wrapper or canvas styles, fix only that game's files, re-run the check for that game (max 2 attempts), and commit `fix: <game> layout fit (spec-12 layout)`.
+   - If the failure comes from shared CSS (`app/arcade.css`), stop (rule 9) and report the viewport and game.
+   - Stop the dev server when done: `pkill -f "next dev"`.
+3. **Mark SPEC 12 done.** Only when every game passes every viewport: set the `Status` line of `specs/12-play-page-viewport-fit.md` to `Implemented` and commit `docs: mark spec-12 implemented (spec-12 layout)`. This is the one state the skill sets itself, because the acceptance criteria are measured. Game specs are never set by the skill.
+
 ## Step 7 — Final report
 
 Report, in this order:
@@ -192,7 +214,8 @@ Report, in this order:
 2. Design direction used (short).
 3. Commit and files from skin-designer.
 4. Commit and files from mobile-porter.
-5. Checks that still need a human: acceptance criteria that need a browser run, a Supabase action, or a manual look. List each one.
-6. Reminder: verify the acceptance criteria, then set the spec state to `Implemented` and commit that change.
+5. SPEC 12 (layout fit): commits made, and the layout check result as a table of game by viewport (pass or fail).
+6. Checks that still need a human: acceptance criteria that need a browser run, a Supabase action, or a manual look. List each one.
+7. Reminder: verify the acceptance criteria, then set the spec state to `Implemented` and commit that change.
 
 Do not push, open a PR, or merge unless the user asks.

@@ -5,6 +5,7 @@ import type { ComponentType } from 'react';
 import type { TouchControls } from '@/lib/touch/controls';
 import { ArkanoidGame } from '@/components/arkanoid-game';
 import { AsteroidsGame } from '@/components/asteroids-game';
+import { FroggerRealGame } from '@/components/games/FroggerGame';
 import { SnakeGame } from '@/components/snake-game';
 import { TetrisGame } from '@/components/tetris-game';
 
@@ -73,6 +74,14 @@ const REAL_GAMES: Record<string, RealGameEntry> = {
       score: s.score,
       level: s.level,
       slot: { label: 'Length', value: s.length ?? 0, hearts: false },
+    }),
+  },
+  frogger: {
+    component: FroggerRealGame,
+    mapStats: (s) => ({
+      score: s.score,
+      level: s.level,
+      slot: { label: 'Lives', value: s.lives ?? 0, hearts: true },
     }),
   },
 };

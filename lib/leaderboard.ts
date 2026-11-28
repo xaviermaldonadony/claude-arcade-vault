@@ -13,7 +13,7 @@ export type Game = {
   long: string;
   cat: 'ARCADE' | 'PUZZLE' | 'SHOOTER' | 'VERSUS';
   cover: string; // CSS class name, e.g. "cover-bricks"
-  color: 'cyan' | 'magenta' | 'yellow' | 'green';
+  color: 'cyan' | 'magenta' | 'yellow' | 'green' | 'lime';
   best: number; // max score for the game, 0 when none
   plays: number; // integer counter
 };
