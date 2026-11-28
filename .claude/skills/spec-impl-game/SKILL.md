@@ -41,6 +41,18 @@ The received argument is: `$ARGUMENTS`
 
 Everything else in `/spec-impl` stays binding: the Approved check, branch creation, the working-tree question, no pushes, no `--no-verify`, and no improvised answers to ambiguity.
 
+## Game pattern (required for every new real game)
+
+A new game is a real game, so it must follow the same pattern as Asteroids, Tetris, Arkanoid and Snake. Do not add a dedicated route such as `app/games/<id>/play/page.tsx`. Implement these in the spec's steps:
+
+1. **Component:** the game component accepts the same props as the other real games: `touch`, `skinSlot`, `paused`, `onStats`, `onEnd`, `onTogglePause` (`RealGameProps` in `lib/games-registry.ts`). If the engine uses different props, add a thin adapter that maps them, as `FroggerRealGame` does.
+2. **Registry:** one entry in `REAL_GAMES` (`lib/games-registry.ts`) with `component` and `mapStats`. `mapStats` gives the HUD score, level and one slot (for example Lives as hearts).
+3. **Touch layout:** add the game id and its enabled keys to `LAYOUT` in `components/touch-dpad.tsx`, and the id to `GameId`. Without it the D-pad has no layout.
+4. **Play route:** none new. `/games/[id]/play` serves every real game through `GamePlayer`.
+5. **Score save:** through `POST /api/scores`, the same as the other games.
+
+If a spec's plan puts the game on a dedicated route or skips the registry, treat that as an ambiguity (rule 2). Show the options and ask before implementing.
+
 ---
 
 ## Stop rules (the only reasons to pause for the user)
@@ -130,6 +142,7 @@ grep -n "REAL_GAMES" lib/games-registry.ts
 
 - Clear and registered: continue.
 - Unclear or not registered: stop and ask (rule 5). Do not guess. Do not register the game yourself.
+- Registered but the game's touch layout (`LAYOUT` in `components/touch-dpad.tsx`) is missing: stop and report it (rule 8 style). The mobile-porter agent needs it.
 
 ## Step 4 — Design direction with /frontend-design
 
