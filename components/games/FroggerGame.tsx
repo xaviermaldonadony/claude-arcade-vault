@@ -2,8 +2,9 @@
 
 import { useEffect, useRef } from 'react';
 
-// SPEC frogger-core (specs/game-jam/frogger/01-frogger-core.md), steps 2-5: constants, types, lane map,
-// game loop, drawing, props, and collision/support detection. Death, goal, scoring and round logic are added in later steps.
+// SPEC frogger-core (specs/game-jam/frogger/01-frogger-core.md), steps 2-6: constants, types, lane map,
+// game loop, drawing, props, collision/support detection, and landing, goals and round completion.
+// Deaths (lives, game over, timeout) are added in step 7.
 
 const COLS = 16;
 const ROWS = 14;
@@ -151,6 +152,7 @@ interface GameState {
   level: number;
   bays: boolean[];
   over: boolean;
+  bestRow: number; // highest row reached this round, for the +10 advance bonus
 }
 
 function freshFrog(): Frog {
@@ -176,6 +178,7 @@ function createState(): GameState {
     level: 1,
     bays: BAY_COLS.map(() => false),
     over: false,
+    bestRow: ROW_START,
   };
 }
 
@@ -215,6 +218,7 @@ function updateState(s: GameState, dt: number) {
       f.row = f.targetRow;
       f.animating = false;
       f.animT = 0;
+      resolveLanding(s);
     }
   }
   if (!f.animating && s.pendingDir) {
@@ -236,6 +240,37 @@ function updateState(s: GameState, dt: number) {
 
   // Round timer. Reaching 0 causes death in a later step.
   s.timeLeft = Math.max(0, s.timeLeft - dt);
+}
+
+// ----- Step 6: landing, goals, round completion -----
+
+// Runs when a hop lands. Scores the first advance per row, fills bays, and ends the round when all are full.
+// Deaths (vehicles, water, timeout, a missed or taken bay) are handled in step 7.
+function resolveLanding(s: GameState) {
+  const f = s.frog;
+  if (f.row < s.bestRow) {
+    s.score += 10 * (s.bestRow - f.row);
+    s.bestRow = f.row;
+  }
+
+  const goal = checkGoal(f, s.bays);
+  if (goal?.kind === 'reached') {
+    s.bays[goal.bay] = true;
+    s.score += 50 + Math.floor(s.timeLeft / 1000) * 10;
+    if (s.bays.every(Boolean)) completeRound(s);
+    else s.frog = freshFrog();
+  }
+}
+
+function completeRound(s: GameState) {
+  s.score += 200;
+  s.level += 1;
+  s.lanes = buildLanes(s.level);
+  s.bays = BAY_COLS.map(() => false);
+  s.frog = freshFrog();
+  s.pendingDir = null;
+  s.timeLeft = roundTime(s.level);
+  s.bestRow = ROW_START;
 }
 
 // ----- Step 5: collision and support detection -----
