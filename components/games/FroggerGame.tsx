@@ -48,6 +48,8 @@ interface Frog {
 
 // Each level multiplies every lane speed by this factor (+15%).
 const LEVEL_SPEED_STEP = 1.15;
+// Road traffic runs at 80% of the spec speed, so the game is a bit easier.
+const ROAD_SPEED_EASE = 0.8;
 
 interface Pattern {
   widths: number[];
@@ -96,7 +98,7 @@ export function buildLanes(level: number): Lane[] {
   for (let i = 0; i <= ROW_ROAD_BOT - ROW_ROAD_TOP; i++) {
     lanes.push({
       row: ROW_ROAD_TOP + i,
-      speed: (1.5 + (i % 3) * 1.25) * mult,
+      speed: (1.5 + (i % 3) * 1.25) * ROAD_SPEED_EASE * mult,
       dir: i % 2 === 0 ? 1 : -1,
       entities: fillLane(ROAD_PATTERNS[i], i * 2),
     });
@@ -127,9 +129,9 @@ const BAY_COLS: [number, number][] = [
 ];
 const TURTLE_CYCLE_MS = 4500;
 const TURTLE_VISIBLE_MS = 3000; // visible, then 1500 ms underwater
-const ROUND_MS_BASE = 15000;
+const ROUND_MS_BASE = 20000; // easier: 20 s instead of 15 s
 const ROUND_MS_STEP = 1000; // 1 s less per level
-const ROUND_MS_MIN = 8000;
+const ROUND_MS_MIN = 12000;
 const CAR_COLORS = ['#d62828', '#f7c600', '#2a6fdb'];
 
 function roundTime(level: number): number {
