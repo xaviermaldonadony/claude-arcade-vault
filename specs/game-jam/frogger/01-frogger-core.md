@@ -183,40 +183,41 @@ No new tables or TypeScript types are introduced — `GameRow` and `ScoreRow` fr
 
 ## Acceptance criteria
 
-- [ ] The `frogger` row exists in the Supabase `games` table with the data model values.
-- [ ] The Frogger card appears on `/games` with cover `cover-frogger` and color `lime`.
-- [ ] The `/games/frogger/play` route loads without SSR or TypeScript errors.
-- [ ] The canvas (640 × 560) renders with the three visually distinct zones (road, river, safe zones, target bays).
-- [ ] The frog spawns centered on the starting row when the game loads.
-- [ ] The frog jumps exactly one cell (40 px) per directional keypress with a 120 ms animation.
-- [ ] The frog cannot move past the side borders.
-- [ ] Cars and trucks move horizontally in a loop along their lanes; they wrap around from the opposite side upon exiting.
-- [ ] Logs and turtles move horizontally in a loop along their lanes.
-- [ ] Turtles alternate between visible and submerged according to the defined cycle.
-- [ ] The frog dies when hit by a road vehicle.
-- [ ] The frog dies when falling into the water (not on a log or visible turtles).
-- [ ] The frog dies when the turtle supporting it submerges.
-- [ ] The frog dies when the round timer runs out.
-- [ ] Upon dying, `onLivesChange(lives - 1)` fires; the frog returns to the starting row.
-- [ ] Upon reaching an empty bay, the bay is marked and the score bonus is added.
-- [ ] Upon reaching an already occupied bay, the frog dies.
-- [ ] Upon filling all 5 bays, the round ends and the next begins with `level` incremented.
-- [ ] `onLevelChange(level)` fires at the start of each new round.
-- [ ] Entity speed increases with each level.
-- [ ] The round timer decreases with each level.
-- [ ] `onScoreChange(score)` fires on every score change.
-- [ ] The internal canvas HUD (score, level, life icons, time bar) renders properly.
-- [ ] The platform's React HUD reflects score, lives, and level in real time.
-- [ ] The platform's "PAUSE" button freezes the game loop; "RESUME" unfreezes it.
-- [ ] The P / Esc keys do not trigger an independent canvas pause.
-- [ ] Upon reaching `lives = 0`, `onLivesChange(0)` and `onGameOver(score)` fire; the React modal appears.
+- [x] The `frogger` row exists in the Supabase `games` table with the data model values.
+- [x] The Frogger card appears on `/games` with cover `cover-frogger` and color `lime`.
+- [x] The `/games/frogger/play` route loads without SSR or TypeScript errors.
+- [x] The canvas (640 × 560) renders with the three visually distinct zones (road, river, safe zones, target bays).
+- [x] The frog spawns centered on the starting row when the game loads.
+- [x] The frog jumps exactly one cell (40 px) per directional keypress with a 120 ms animation.
+- [x] The frog cannot move past the side borders.
+- [x] Cars and trucks move horizontally in a loop along their lanes; they wrap around from the opposite side upon exiting.
+- [x] Logs and turtles move horizontally in a loop along their lanes.
+- [x] Turtles alternate between visible and submerged according to the defined cycle.
+- [x] The frog dies when hit by a road vehicle.
+- [x] The frog dies when falling into the water (not on a log or visible turtles).
+- [x] The frog dies when the turtle supporting it submerges.
+- [x] The frog dies when the round timer runs out.
+- [x] Upon dying, `onLivesChange(lives - 1)` fires; the frog returns to the starting row.
+- [x] Upon reaching an empty bay, the bay is marked and the score bonus is added.
+- [x] Upon reaching an already occupied bay, the frog dies.
+- [x] Upon filling all 5 bays, the round ends and the next begins with `level` incremented.
+- [x] `onLevelChange(level)` fires at the start of each new round.
+- [x] Entity speed increases with each level.
+- [x] The round timer decreases with each level.
+- [x] `onScoreChange(score)` fires on every score change.
+- [x] The internal canvas HUD (score, level, life icons, time bar) renders properly.
+- [x] The platform's React HUD reflects score, lives, and level in real time.
+- [x] The platform's "PAUSE" button freezes the game loop; "RESUME" unfreezes it.
+- [x] The P / Esc keys do not trigger an independent canvas pause.
+- [x] Upon reaching `lives = 0`, `onLivesChange(0)` and `onGameOver(score)` fire; the React modal appears.
 - [ ] The modal pre-fills the name from `av_player_name` if present in localStorage.
 - [ ] Upon confirming the name, the score is inserted into Supabase and the name is persisted in localStorage.
-- [ ] The save button is disabled after the first submission (no duplicate insertion).
-- [ ] The "PLAY AGAIN" button restarts the game from scratch (new `gameKey`).
-- [ ] The saved score appears on `/games/frogger` and `/hall-of-fame` upon reloading.
-- [ ] `npm run build` completes with no TypeScript errors.
-- [ ] No existing routes return 500.
+- [x] The save button is disabled after the first submission (no duplicate insertion).
+- [x] The "PLAY AGAIN" button restarts the game from scratch (new `gameKey`).
+- [x] The saved score appears on `/games/frogger` and `/hall-of-fame` upon reloading.
+- [x] `npm run build` completes with no TypeScript errors.
+- [x] No existing routes return 500.
+- [x] On a phone in portrait, the board keeps its 8:7 ratio and stays inside the CRT frame, with no sideways scroll (`.frogger-board` in `app/arcade.css`). Checked in Chromium mobile emulation at 375, 390 and 430 px wide, and on an iPhone.
 
 ---
 

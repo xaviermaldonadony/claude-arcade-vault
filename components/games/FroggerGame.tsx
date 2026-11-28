@@ -724,6 +724,7 @@ export function FroggerGame(props: FroggerGameProps) {
   return (
     <canvas
       ref={canvasRef}
+      className="frogger-board"
       width={CANVAS_W}
       height={CANVAS_H}
       aria-label="Frogger game board"

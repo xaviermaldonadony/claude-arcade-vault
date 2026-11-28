@@ -3271,6 +3271,14 @@ body.av-play-touch .av-footer {
   body.av-play-touch .crt-screen:has(canvas[aria-label='Frogger game board']) {
     aspect-ratio: 8 / 7;
   }
+  /* Width drives the board size on phones. The inline flex and height:0 from FroggerGame can make Safari use the 640px intrinsic width and overflow the frame. */
+  body.av-play-touch .frogger-board {
+    flex: none !important;
+    width: 100% !important;
+    height: auto !important;
+    min-width: 0;
+    max-width: 100%;
+  }
 }
 
 /* Phones on a game play page: compact HUD so the controls fit on one screen (SPEC 10). */
