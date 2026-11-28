@@ -4,7 +4,7 @@ import type { PointerEvent } from 'react';
 import type { TouchControls, TouchKey } from '@/lib/touch/controls';
 
 type Dir = 'up' | 'down' | 'left' | 'right';
-type GameId = 'asteroids' | 'tetris' | 'arkanoid' | 'snake';
+type GameId = 'asteroids' | 'tetris' | 'arkanoid' | 'snake' | 'frogger';
 
 // Which keys each game uses. Keys a game does not use are drawn dimmed and disabled (SPEC 10).
 // The A and B labels are shown in the aria-label of each round button.
@@ -13,6 +13,7 @@ const LAYOUT: Record<GameId, { enabled: TouchKey[]; a: string | null; b: string 
   tetris: { enabled: ['up', 'down', 'left', 'right', 'a', 'b'], a: 'ROTATE', b: 'DROP' },
   arkanoid: { enabled: ['left', 'right'], a: null, b: null },
   snake: { enabled: ['up', 'down', 'left', 'right', 'a'], a: 'BOOST', b: null },
+  frogger: { enabled: ['up', 'down', 'left', 'right'], a: null, b: null },
 };
 
 // Arrow triangles from the Gamepad MK-II reference (references/game-pad-assets/gamepad.html).

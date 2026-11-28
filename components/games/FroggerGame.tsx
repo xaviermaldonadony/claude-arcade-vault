@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import type { RealGameProps } from '@/lib/games-registry';
+import type { TouchControls } from '@/lib/touch/controls';
 
 // SPEC frogger-core (specs/game-jam/frogger/01-frogger-core.md), steps 2-7: constants, types, lane map,
 // game loop, drawing, props, collision/support detection, landing and goals, round completion, and deaths.
@@ -531,6 +533,8 @@ export interface FroggerGameProps {
   onLivesChange: (lives: number) => void;
   onLevelChange: (level: number) => void;
   onGameOver: (finalScore: number) => void;
+  // On-screen D-pad state from the player page (SPEC 10). Optional: keyboard only without it.
+  touch?: TouchControls;
 }
 
 const KEY_DIRS: Record<string, Direction> = {
@@ -576,7 +580,16 @@ export function FroggerGame(props: FroggerGameProps) {
       const dt = last ? Math.min(50, now - last) : 16;
       last = now;
 
-      if (!pausedRef.current && !s.over) updateState(s, dt);
+      if (!pausedRef.current && !s.over) {
+        // A D-pad press is queued like a key press. Last one wins.
+        const touch = callbacksRef.current.touch;
+        if (touch) {
+          for (const dir of ['up', 'down', 'left', 'right'] as const) {
+            if (touch.takePress(dir)) s.pendingDir = dir;
+          }
+        }
+        updateState(s, dt);
+      }
       drawState(ctx, s);
 
       const cb = callbacksRef.current;
@@ -620,6 +633,27 @@ export function FroggerGame(props: FroggerGameProps) {
         aspectRatio: `${CANVAS_W} / ${CANVAS_H}`,
         imageRendering: 'pixelated',
       }}
+    />
+  );
+}
+
+// Registry adapter (lib/games-registry.ts): the same props as the other real games.
+// Stats go up as one object, so the player's HUD gets score, level and lives together.
+export function FroggerRealGame({ touch, paused, onStats, onEnd }: RealGameProps) {
+  const [stats, setStats] = useState({ score: 0, level: 1, lives: 3 });
+
+  useEffect(() => {
+    onStats(stats);
+  }, [stats, onStats]);
+
+  return (
+    <FroggerGame
+      touch={touch}
+      paused={paused}
+      onScoreChange={(score) => setStats((s) => ({ ...s, score }))}
+      onLivesChange={(lives) => setStats((s) => ({ ...s, lives }))}
+      onLevelChange={(level) => setStats((s) => ({ ...s, level }))}
+      onGameOver={onEnd}
     />
   );
 }
