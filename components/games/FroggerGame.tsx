@@ -50,8 +50,8 @@ interface Frog {
 
 // Each level multiplies every lane speed by this factor (+15%).
 const LEVEL_SPEED_STEP = 1.15;
-// Road traffic runs at 80% of the spec speed, so the game is a bit easier.
-const ROAD_SPEED_EASE = 0.8;
+// Road traffic runs at 70% of the spec speed, so the game is easier.
+const ROAD_SPEED_EASE = 0.7;
 
 interface Pattern {
   widths: number[];
@@ -131,9 +131,9 @@ const BAY_COLS: [number, number][] = [
 ];
 const TURTLE_CYCLE_MS = 4500;
 const TURTLE_VISIBLE_MS = 3000; // visible, then 1500 ms underwater
-const ROUND_MS_BASE = 20000; // easier: 20 s instead of 15 s
+const ROUND_MS_BASE = 25000; // easier: 25 s instead of 15 s
 const ROUND_MS_STEP = 1000; // 1 s less per level
-const ROUND_MS_MIN = 12000;
+const ROUND_MS_MIN = 15000;
 const CAR_COLORS = ['#d62828', '#f7c600', '#2a6fdb'];
 
 function roundTime(level: number): number {
