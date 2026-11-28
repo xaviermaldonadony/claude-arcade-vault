@@ -2,9 +2,8 @@
 
 import { useEffect, useRef } from 'react';
 
-// SPEC frogger-core (specs/game-jam/frogger/01-frogger-core.md), steps 2-6: constants, types, lane map,
-// game loop, drawing, props, collision/support detection, and landing, goals and round completion.
-// Deaths (lives, game over, timeout) are added in step 7.
+// SPEC frogger-core (specs/game-jam/frogger/01-frogger-core.md), steps 2-7: constants, types, lane map,
+// game loop, drawing, props, collision/support detection, landing and goals, round completion, and deaths.
 
 const COLS = 16;
 const ROWS = 14;
@@ -238,8 +237,48 @@ function updateState(s: GameState, dt: number) {
     if (support) f.col += (support.lane.speed * support.lane.dir * dt) / 16 / CELL;
   }
 
-  // Round timer. Reaching 0 causes death in a later step.
   s.timeLeft = Math.max(0, s.timeLeft - dt);
+  checkDeaths(s);
+}
+
+// ----- Step 7: deaths and lives -----
+
+// Loses one life and restarts the frog and the timer. On the last life the game is over.
+function killFrog(s: GameState) {
+  s.lives -= 1;
+  if (s.lives <= 0) {
+    s.lives = 0;
+    s.over = true;
+    return;
+  }
+  s.frog = freshFrog();
+  s.pendingDir = null;
+  s.timeLeft = roundTime(s.level);
+}
+
+// Death conditions: timeout, road vehicle, water, a submerged turtle under the frog, drifting off the river edges, a missed or taken bay.
+function checkDeaths(s: GameState) {
+  if (s.timeLeft <= 0) {
+    killFrog(s);
+    return;
+  }
+  const f = s.frog;
+  if (f.animating) return;
+
+  if (checkRoadCollision(f, s.lanes)) {
+    killFrog(s);
+    return;
+  }
+  if (isRiverRow(f.row)) {
+    const drifted = f.col < -0.5 || f.col > COLS - 0.5;
+    if (drifted || !getSupport(f, s.lanes)) {
+      killFrog(s);
+      return;
+    }
+  }
+  if (checkGoal(f, s.bays)?.kind === 'death') {
+    killFrog(s);
+  }
 }
 
 // ----- Step 6: landing, goals, round completion -----
@@ -518,7 +557,7 @@ export function FroggerGame(props: FroggerGameProps) {
 
     const s = createState();
     // Values last reported to the parent, so callbacks fire only on change.
-    const reported = { score: 0, lives: 3, level: 1 };
+    const reported = { score: 0, lives: 3, level: 1, over: false };
 
     const onKey = (e: KeyboardEvent) => {
       const dir = KEY_DIRS[e.key];
@@ -550,6 +589,11 @@ export function FroggerGame(props: FroggerGameProps) {
       if (s.level !== reported.level) {
         reported.level = s.level;
         cb.onLevelChange(s.level);
+      }
+      // Lives reach 0 before the game ends, so onLivesChange(0) comes before onGameOver.
+      if (s.over && !reported.over) {
+        reported.over = true;
+        cb.onGameOver(s.score);
       }
 
       raf = requestAnimationFrame(frame);
